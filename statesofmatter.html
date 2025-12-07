@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>States of Matter Simulation</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <style>
+        :root {
+            --primary-color: #2a6f97;
+            --bg-color: #f7f9fc;
+            --container-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --solid-color: #014f86;
+            --liquid-color: #01a7c2;
+            --gas-color: #a9d6e5;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 20px 0;
+        }
+        
+        /* --- NEW: Main Layout --- */
+        .container {
+            width: 90%;
+            /* Make it wider to support two columns */
+            max-width: 1100px; 
+            padding: 40px; 
+            background-color: var(--container-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07);
+            
+            /* Use Grid for the 2-column layout */
+            display: grid;
+            grid-template-columns: 2.5fr 1fr; /* Left column is 2.5x wider */
+            gap: 40px;
+        }
+        
+        .experiment-content {
+            /* This will hold all the main simulation content */
+            grid-column: 1 / 2;
+        }
+        .visual-pane {
+            /* This is the new right-hand column */
+            grid-column: 2 / 3;
+            padding-top: 50px;
+        }
+        /* ------------------------ */
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 30px;
+            /* Make H1 span both columns */
+            grid-column: 1 / -1; 
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 35px;
+            font-size: 1.5rem;
+        }
+
+        /* Particle Simulation Box */
+        .simulation-box {
+            width: 100%;
+            height: 300px;
+            background-color: #f9f9f9;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            will-change: transform;
+            animation-iteration-count: infinite;
+        }
+        
+        .simulation-box.solid .particle {
+            background-color: var(--solid-color);
+            animation: vibrate 0.15s linear alternate;
+        }
+        .simulation-box.liquid .particle {
+            background-color: var(--liquid-color);
+            animation-timing-function: ease-in-out;
+            animation-direction: alternate;
+        }
+        .simulation-box.gas .particle {
+            background-color: var(--gas-color);
+            animation-timing-function: linear;
+        }
+
+        @keyframes vibrate {
+            from { transform: translate(0, 0); }
+            to { transform: translate(1px, 2px); }
+        }
+        @keyframes flow {
+            0%   { transform: translate(0, 0); }
+            50%  { transform: translate(80px, 10px); }
+            100% { transform: translate(0, 0); }
+        }
+        @keyframes flow2 {
+            0%   { transform: translate(0, 0); }
+            50%  { transform: translate(-60px, -5px); }
+            100% { transform: translate(0, 0); }
+        }
+        @keyframes bounce {
+            0%   { transform: translate(0px, 0px); }
+            25%  { transform: translate(200px, 150px); }
+            50%  { transform: translate(50px, 280px); }
+            75%  { transform: translate(300px, 50px); }
+            100% { transform: translate(0px, 0px); }
+        }
+        @keyframes bounce2 {
+            0%   { transform: translate(0px, 0px); }
+            25%  { transform: translate(-150px, 80px); }
+            50%  { transform: translate(200px, -100px); }
+            75%  { transform: translate(-50px, 250px); }
+            100% { transform: translate(0px, 0px); }
+        }
+
+        /* Controls */
+        .controls {
+            padding: 25px;
+            background-color: #fdfdfd;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-top: 25px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .input-group span {
+            font-weight: 700;
+            color: var(--primary-color);
+            background-color: #f0f8ff;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        /* Output */
+        .output {
+            text-align: center;
+            padding: 20px;
+            background-color: var(--bg-color);
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .output h3 {
+            margin: 0 0 10px 0;
+            color: var(--primary-color);
+        }
+        
+        /* --- NEW: State Visual (Right Column) --- */
+        .visual-container {
+            width: 100%;
+            height: 300px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            background: #f9f9f9;
+        }
+        
+        /* Base state for all visuals (hidden) */
+        .ice-cube, .water-puddle, .vapor {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+        }
+
+        /* 1. Ice Cube (Solid) */
+        .ice-cube {
+            width: 80px;
+            height: 80px;
+            background: #d6f0ff;
+            border: 2px solid var(--solid-color);
+            border-radius: 4px;
+            transform: translate(-50%, -50%) rotate(20deg);
+            box-shadow: 0 0 15px rgba(1, 79, 134, 0.3);
+        }
+        .visual-container.show-solid .ice-cube {
+            opacity: 1; /* Show */
+        }
+
+        /* 2. Water Puddle (Liquid) */
+        .water-puddle {
+            width: 180px;
+            height: 60px;
+            background: var(--liquid-color);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            transform: translate(-50%, 40%); /* At the bottom */
+            box-shadow: 0 0 15px rgba(1, 167, 194, 0.5);
+        }
+        .visual-container.show-liquid .water-puddle {
+            opacity: 1; /* Show */
+        }
+        
+        /* 3. Vapor (Gas) */
+        .vapor {
+            width: 100%;
+            height: 100%;
+            transform: translate(-50%, -50%);
+        }
+        .vapor span {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: #e0eef5;
+            border-radius: 50%;
+            animation: rise 5s infinite linear;
+            opacity: 0.7;
+        }
+        .vapor span:nth-child(1) { top: 80%; left: 30%; animation-delay: 0s; }
+        .vapor span:nth-child(2) { top: 90%; left: 60%; animation-delay: 1s; }
+        .vapor span:nth-child(3) { top: 85%; left: 45%; animation-delay: 2.5s; }
+        
+        @keyframes rise {
+            from {
+                transform: translateY(0) scale(0.5);
+                opacity: 0;
+            }
+            50% {
+                opacity: 0.7;
+            }
+            to {
+                transform: translateY(-250px) scale(1.2);
+                opacity: 0;
+            }
+        }
+        .visual-container.show-gas .vapor {
+            opacity: 1; /* Show */
+        }
+        /* ---------------------------------- */
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>States of Matter Simulation</h1>
+
+        <div class="experiment-content">
+            <h2>Definition</h2>
+            <p>This experiment shows how a substance (like water) changes its state based on temperature. The particles in the simulation will change their behavior to match the current state.</p>
+
+            <h2>Visual Simulation (Particles)</h2>
+            <div id="simulation-box" class="simulation-box liquid">
+                </div>
+
+            <div class="controls">
+                <h2>Controls</h2>
+                <div class="input-group">
+                    <label for="tempSlider">Temperature (°C): <span id="tempValue">20 °C</span></label>
+                    <input type="range" id="tempSlider" min="-50" max="150" value="20" step="1">
+                </div>
+
+                <div class="output">
+                    <h3>Current State: <span id="stateName">Liquid</span></h3>
+                    <p id="stateDescription">Particles are close but can flow past one another.</p>
+                </div>
+            </div>
+
+            <a href="/student_menu" style="display: block; text-align: center; margin-top: 30px; font-weight: 600; color: var(--primary-color);">Back to Main Menu</a>
+        </div>
+        
+        <div class="visual-pane">
+            <h2 style="margin-top: 0;">State Visual</h2>
+            <div id="stateVisual" class="visual-container show-liquid">
+                <div class="ice-cube"></div>
+                <div class="water-puddle"></div>
+                <div class="vapor">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        // Get references to elements
+        const tempSlider = document.getElementById('tempSlider');
+        const tempValue = document.getElementById('tempValue');
+        const simBox = document.getElementById('simulation-box');
+        const stateName = document.getElementById('stateName');
+        const stateDescription = document.getElementById('stateDescription');
+        
+        // --- NEW: Get the new visual container ---
+        const stateVisual = document.getElementById('stateVisual');
+        
+        /**
+         * Create the particles for the simulation
+         */
+        function createParticles() {
+            simBox.innerHTML = ''; // Clear old particles
+            const state = simBox.classList.contains('solid') ? 'solid' :
+                          simBox.classList.contains('liquid') ? 'liquid' : 'gas';
+            
+            const boxWidth = simBox.offsetWidth - 10;
+            const boxHeight = simBox.offsetHeight - 10;
+            const particleCount = 50; 
+
+            if (state === 'solid') {
+                const padding = 30;
+                const gridSpacing = 25;
+                let numCols = Math.floor((boxWidth - padding * 2) / gridSpacing);
+                let numRows = Math.floor((boxHeight - padding * 2) / gridSpacing);
+                
+                for (let r = 0; r < numRows; r++) {
+                    for (let c = 0; c < numCols; c++) {
+                        let particle = document.createElement('span');
+                        particle.className = 'particle';
+                        particle.style.left = (padding + c * gridSpacing) + 'px';
+                        particle.style.top = (padding + r * gridSpacing) + 'px';
+                        particle.style.animationDelay = (Math.random() * 0.15) + 's';
+                        simBox.appendChild(particle);
+                    }
+                }
+            } else if (state === 'liquid') {
+                for (let i = 0; i < particleCount; i++) {
+                    let particle = document.createElement('span');
+                    particle.className = 'particle';
+                    let x = Math.random() * boxWidth;
+                    let y = (Math.random() * (boxHeight * 0.6)) + (boxHeight * 0.4);
+                    particle.style.left = x + 'px';
+                    particle.style.top = y + 'px';
+                    particle.style.animationName = (Math.random() > 0.5) ? 'flow' : 'flow2';
+                    particle.style.animationDuration = (Math.random() * 5 + 7) + 's';
+                    particle.style.animationDelay = (Math.random() * 5) + 's';
+                    simBox.appendChild(particle);
+                }
+            } else { // Gas
+                for (let i = 0; i < particleCount; i++) {
+                    let particle = document.createElement('span');
+                    particle.className = 'particle';
+                    let x = Math.random() * boxWidth;
+                    let y = Math.random() * boxHeight;
+                    particle.style.left = x + 'px';
+                    particle.style.top = y + 'px';
+                    particle.style.animationName = (Math.random() > 0.5) ? 'bounce' : 'bounce2';
+                    particle.style.animationDuration = (Math.random() * 4 + 3) + 's';
+                    particle.style.animationDelay = (Math.random() * 3) + 's';
+                    simBox.appendChild(particle);
+                }
+            }
+        }
+
+        /**
+         * Called when the slider moves.
+         * Fetches the state from the Java backend and updates the UI.
+         */
+        async function updateSimulation() {
+            let temp = tempSlider.value;
+            tempValue.textContent = `${temp} °C`;
+
+            try {
+                // 1. Call the Java backend API
+                const response = await fetch(`/getstate?temperature=${temp}`);
+                if (!response.ok) throw new Error("Server error");
+                
+                const data = await response.json();
+                
+                // 2. Update text output
+                stateName.textContent = data.state;
+                stateDescription.textContent = data.description;
+                
+                let newState = data.state.toLowerCase();
+                
+                // --- NEW: Update the visual pane ---
+                // This single line cross-fades the new visual
+                stateVisual.className = 'visual-container show-' + newState;
+                
+                // 3. Update particle simulation (only if state changed)
+                if (!simBox.classList.contains(newState)) {
+                    simBox.className = "simulation-box " + newState;
+                    createParticles(); // Re-create particles for the new state
+                }
+
+            } catch (error) {
+                console.error("Failed to fetch state:", error);
+                stateName.textContent = "Error";
+            }
+        }
+
+        // --- Event Listeners ---
+        tempSlider.addEventListener('input', updateSimulation);
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            updateSimulation(); 
+        });
+
+        // === VOICE ASSISTANT (English Only) ===
+        const narration = `States of Matter Experiment.
+
+Matter exists in three main states: Solid, Liquid, and Gas. The state depends on temperature and how fast particles move.
+
+In solids, particles are tightly packed and vibrate in place. They have a fixed shape like ice.
+
+In liquids, particles are close but can slide past each other. They take the shape of their container like water.
+
+In gases, particles are far apart and move rapidly in all directions. They expand to fill any space like steam.
+
+In this simulation, use the temperature slider to see how matter changes. At low temperatures you see solid, at medium temperatures you see liquid, and at high temperatures you see gas.
+
+Watch how particle movement changes with temperature. This shows how heat energy affects the state of matter.`;
+
+        let speechSynth = window.speechSynthesis;
+        let currentUtterance = null;
+
+        function loadVoices() { return speechSynth.getVoices(); }
+        speechSynth.onvoiceschanged = loadVoices;
+        setTimeout(loadVoices, 100);
+
+        function toggleVoicePanel() { document.getElementById('voicePanel').classList.toggle('active'); }
+        
+        function playNarration() {
+            stopNarration();
+            const voices = speechSynth.getVoices();
+            currentUtterance = new SpeechSynthesisUtterance(narration);
+            
+            const femaleEn = voices.find(v => 
+                (v.name.includes('Zira') || v.name.includes('Female') || 
+                 v.name.includes('Samantha') || v.name.includes('Google')) && 
+                v.lang.startsWith('en')
+            );
+            if (femaleEn) currentUtterance.voice = femaleEn;
+            
+            currentUtterance.lang = 'en-US';
+            currentUtterance.rate = 0.9;
+            currentUtterance.pitch = 1.1;
+            
+            currentUtterance.onstart = () => { 
+                document.getElementById('voiceBtn').classList.add('speaking'); 
+                updateVoiceStatus('🔊 Speaking...'); 
+            };
+            currentUtterance.onend = () => { 
+                document.getElementById('voiceBtn').classList.remove('speaking'); 
+                updateVoiceStatus('Completed'); 
+            };
+            currentUtterance.onerror = () => { 
+                document.getElementById('voiceBtn').classList.remove('speaking'); 
+                updateVoiceStatus('Error'); 
+            };
+            
+            speechSynth.speak(currentUtterance);
+        }
+        
+        function stopNarration() {
+            speechSynth.cancel();
+            document.getElementById('voiceBtn').classList.remove('speaking');
+            updateVoiceStatus('Stopped');
+        }
+        
+        function updateVoiceStatus(text) { document.getElementById('voiceStatus').textContent = text; }
+    </script>
+
+    <style>
+        .voice-assistant-btn { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #4f46e5, #7c3aed); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); transition: all 0.3s ease; z-index: 1000; }
+        .voice-assistant-btn:hover { transform: scale(1.1); }
+        .voice-assistant-btn i { font-size: 1.8rem; color: white; }
+        .voice-assistant-btn.speaking { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); } 50% { box-shadow: 0 4px 30px rgba(79, 70, 229, 0.8); } }
+        .voice-panel { position: fixed; bottom: 100px; right: 30px; width: 280px; background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); padding: 20px; display: none; z-index: 999; }
+        .voice-panel.active { display: block; }
+        .voice-panel h3 { margin: 0 0 15px 0; color: #4f46e5; font-size: 1.1rem; }
+        .voice-controls { display: flex; gap: 10px; }
+        .voice-controls button { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .play-btn { background: #10b981; color: white; }
+        .stop-btn { background: #ef4444; color: white; }
+        .voice-status { margin-top: 15px; padding: 10px; background: #f8fafc; border-radius: 8px; font-size: 0.85rem; color: #64748b; text-align: center; }
+    </style>
+
+    <button class="voice-assistant-btn" id="voiceBtn" onclick="toggleVoicePanel()" title="Voice Assistant"><i class='bx bxs-volume-full'></i></button>
+    <div class="voice-panel" id="voicePanel">
+        <h3><i class='bx bx-volume-full'></i> Voice Explanation</h3>
+        <div class="voice-controls">
+            <button class="play-btn" onclick="playNarration()"><i class='bx bx-play'></i> Play</button>
+            <button class="stop-btn" onclick="stopNarration()"><i class='bx bx-stop'></i> Stop</button>
+        </div>
+        <div class="voice-status" id="voiceStatus">Press Play to listen</div>
+    </div>
+
+</body>
+</html>

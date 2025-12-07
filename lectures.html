@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lecture Videos - Virtual Lab</title>
+    <link rel="stylesheet" href="/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        .lecture-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .lecture-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid var(--border);
+        }
+        .lecture-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+        }
+        .lecture-thumbnail {
+            width: 100%;
+            height: 180px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .lecture-thumbnail i {
+            font-size: 4rem;
+            color: white;
+            opacity: 0.9;
+        }
+        .play-overlay {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .play-overlay:hover {
+            transform: scale(1.1);
+        }
+        .play-overlay i {
+            font-size: 1.8rem;
+            color: #667eea;
+            margin-left: 4px;
+        }
+        .lecture-content {
+            padding: 1.25rem;
+        }
+        .lecture-category {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .lecture-category.physics { background: #eef2ff; color: #4f46e5; }
+        .lecture-category.chemistry { background: #dcfce7; color: #16a34a; }
+        .lecture-category.engineering { background: #fee2e2; color: #dc2626; }
+        .lecture-category.general { background: #f3f4f6; color: #6b7280; }
+        .lecture-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        .lecture-summary {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+        .lecture-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .watch-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: opacity 0.2s;
+        }
+        .watch-btn:hover {
+            opacity: 0.9;
+        }
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .filter-tab {
+            padding: 8px 20px;
+            border-radius: 20px;
+            background: white;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .filter-tab:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .filter-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+        .empty-state i {
+            font-size: 4rem;
+            opacity: 0.3;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="brand">
+            <i class='bx bx-atom'></i> Virtual Lab
+        </div>
+        <ul class="nav-menu" id="nav-menu">
+            <!-- Dynamic sidebar loaded by JS -->
+        </ul>
+        <div class="user-profile">
+            <a href="/logout" class="logout-btn"><i class='bx bx-log-out'></i> Sign Out</a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">Lecture Videos</h1>
+            <p class="page-subtitle">Watch educational videos uploaded by your teachers.</p>
+        </div>
+
+        <div class="filter-tabs">
+            <div class="filter-tab active" onclick="filterLectures('all')">All</div>
+            <div class="filter-tab" onclick="filterLectures('Physics')">Physics</div>
+            <div class="filter-tab" onclick="filterLectures('Chemistry')">Chemistry</div>
+            <div class="filter-tab" onclick="filterLectures('Engineering')">Engineering</div>
+            <div class="filter-tab" onclick="filterLectures('General')">General</div>
+        </div>
+
+        <div id="lecturesContainer" class="lecture-grid">
+            <!-- Lectures will be loaded here -->
+        </div>
+
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <i class='bx bx-video-off'></i>
+            <h3>No Lectures Available</h3>
+            <p>Your teachers haven't uploaded any lecture videos yet.</p>
+        </div>
+    </main>
+
+    <script>
+        let allLectures = [];
+
+        function loadLectures() {
+            fetch('/api/lectures')
+                .then(r => r.json())
+                .then(data => {
+                    allLectures = data;
+                    renderLectures(data);
+                })
+                .catch(err => {
+                    console.error('Error loading lectures:', err);
+                    document.getElementById('emptyState').style.display = 'block';
+                });
+        }
+
+        function renderLectures(lectures) {
+            const container = document.getElementById('lecturesContainer');
+            const emptyState = document.getElementById('emptyState');
+
+            if (lectures.length === 0) {
+                container.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            container.innerHTML = lectures.map(lecture => {
+                const isLocalVideo = lecture.videoUrl.startsWith('/videos/');
+                const playAction = isLocalVideo 
+                    ? `playLocalVideo('${lecture.videoUrl}', '${lecture.title.replace(/'/g, "\\'")}')`
+                    : `window.open('${lecture.videoUrl}', '_blank')`;
+                const watchBtn = isLocalVideo
+                    ? `<button onclick="${playAction}" class="watch-btn" style="margin-top:12px; display:inline-flex; border:none; cursor:pointer;"><i class='bx bx-play-circle'></i> Watch Now</button>`
+                    : `<a href="${lecture.videoUrl}" target="_blank" class="watch-btn" style="margin-top:12px; display:inline-flex;"><i class='bx bx-play-circle'></i> Watch Now</a>`;
+                
+                return `
+                <div class="lecture-card">
+                    <div class="lecture-thumbnail" style="${getThumbnailGradient(lecture.category)}">
+                        <div class="play-overlay" onclick="${playAction}">
+                            <i class='bx bx-play'></i>
+                        </div>
+                    </div>
+                    <div class="lecture-content">
+                        <span class="lecture-category ${lecture.category.toLowerCase()}">${lecture.category}</span>
+                        <h3 class="lecture-title">${lecture.title}</h3>
+                        <p class="lecture-summary">${lecture.summary}</p>
+                        <div class="lecture-meta">
+                            <span><i class='bx bx-user'></i> ${lecture.teacher}</span>
+                            <span><i class='bx bx-calendar'></i> ${lecture.date}</span>
+                        </div>
+                        ${watchBtn}
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function playLocalVideo(url, title) {
+            // Determine video type from URL
+            let videoType = 'video/mp4';
+            if (url.endsWith('.webm')) videoType = 'video/webm';
+            else if (url.endsWith('.ogg')) videoType = 'video/ogg';
+            else if (url.endsWith('.mov')) videoType = 'video/quicktime';
+            else if (url.endsWith('.avi')) videoType = 'video/x-msvideo';
+            
+            const modal = document.createElement('div');
+            modal.className = 'video-modal';
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;';
+            modal.innerHTML = `
+                <div style="background:white;border-radius:16px;padding:20px;max-width:900px;width:95%;max-height:90vh;overflow:auto;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+                        <h3 style="margin:0;color:var(--text);">${title}</h3>
+                        <button onclick="this.closest('.video-modal').remove()" style="background:none;border:none;font-size:1.8rem;cursor:pointer;color:#666;">&times;</button>
+                    </div>
+                    <video controls autoplay style="width:100%;border-radius:12px;max-height:70vh;">
+                        <source src="${url}" type="${videoType}">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+            `;
+            modal.addEventListener('click', (e) => { if(e.target === modal) modal.remove(); });
+            document.body.appendChild(modal);
+        }
+
+        function getThumbnailGradient(category) {
+            const gradients = {
+                'Physics': 'background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);',
+                'Chemistry': 'background: linear-gradient(135deg, #10b981 0%, #059669 100%);',
+                'Engineering': 'background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);',
+                'General': 'background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);'
+            };
+            return gradients[category] || gradients['General'];
+        }
+
+        function filterLectures(category) {
+            // Update active tab
+            document.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Filter lectures
+            if (category === 'all') {
+                renderLectures(allLectures);
+            } else {
+                const filtered = allLectures.filter(l => l.category === category);
+                renderLectures(filtered);
+            }
+        }
+
+        // Load sidebar based on role
+        function loadSidebar() {
+            fetch('/getprofile')
+                .then(res => res.json())
+                .then(data => {
+                    const navMenu = document.getElementById('nav-menu');
+                    let menuHTML = '';
+                    
+                    if (data.role === 'TEACHER') {
+                        menuHTML = `
+                            <li class="nav-item"><a href="/teacher_menu" class="nav-link"><i class='bx bx-grid-alt'></i> Dashboard</a></li>
+                            <li class="nav-item"><a href="/lectures" class="nav-link active"><i class='bx bx-video'></i> Lectures</a></li>
+                            <li class="nav-item"><a href="/materials" class="nav-link"><i class='bx bx-book-open'></i> Materials</a></li>
+                            <li class="nav-item"><a href="/quiz" class="nav-link"><i class='bx bx-brain'></i> Quizzes</a></li>
+                            <li class="nav-item"><a href="/tests" class="nav-link"><i class='bx bx-edit-alt'></i> Tests</a></li>
+                            <li class="nav-item"><a href="/feedback" class="nav-link"><i class='bx bx-message-square-dots'></i> Feedback</a></li>
+                            <li class="nav-item"><a href="/profile" class="nav-link"><i class='bx bx-user-circle'></i> My Profile</a></li>
+                        `;
+                    } else {
+                        menuHTML = `
+                            <li class="nav-item"><a href="/student_menu" class="nav-link"><i class='bx bx-grid-alt'></i> Dashboard</a></li>
+                            <li class="nav-item"><a href="/lectures" class="nav-link active"><i class='bx bx-video'></i> Lectures</a></li>
+                            <li class="nav-item"><a href="/materials" class="nav-link"><i class='bx bx-book-open'></i> Materials</a></li>
+                            <li class="nav-item"><a href="/quiz" class="nav-link"><i class='bx bx-brain'></i> Quizzes</a></li>
+                            <li class="nav-item"><a href="/tests" class="nav-link"><i class='bx bx-edit-alt'></i> Tests</a></li>
+                            <li class="nav-item"><a href="/dashboard" class="nav-link"><i class='bx bx-bar-chart-alt-2'></i> Performance</a></li>
+                            <li class="nav-item"><a href="/feedback" class="nav-link"><i class='bx bx-message-square-dots'></i> Feedback</a></li>
+                            <li class="nav-item"><a href="/profile" class="nav-link"><i class='bx bx-user-circle'></i> My Profile</a></li>
+                        `;
+                    }
+                    navMenu.innerHTML = menuHTML;
+                });
+        }
+
+        // Load lectures and sidebar on page load
+        loadLectures();
+        loadSidebar();
+    </script>
+</body>
+</html>

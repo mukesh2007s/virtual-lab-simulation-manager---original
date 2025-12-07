@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Lab Menu</title>
+    <style>
+        :root {
+            --primary-blue: #1d4ed8;
+            --bg-light: #f8fafc;
+            --border-color: #e2e8f0;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --tag-green: #dcfce7;
+            --tag-green-text: #166534;
+            --tag-yellow: #fef9c3;
+            --tag-yellow-text: #854d0e;
+            --tag-red: #fee2e2;
+            --tag-red-text: #991b1b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-light);
+            margin: 0;
+            color: var(--text-dark);
+        }
+
+        /* --- Header / Navbar --- */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-light);
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-links a:hover {
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+        }
+
+        .nav-links a.active {
+            background-color: var(--primary-blue);
+            color: #ffffff;
+        }
+
+        /* --- Main Content --- */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .library-header h1 {
+            font-size: 2.25rem;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .library-header p {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            margin-bottom: 2rem;
+        }
+
+        /* --- Experiment Grid --- */
+        .experiment-grid {
+            display: grid;
+            /* Responsive grid: 3 cols on large, 2 on medium, 1 on small */
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* --- Experiment Card --- */
+        .experiment-card {
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            /* This is the colored top border from the screenshot */
+            border-top-width: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .experiment-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 1.5rem 0 1.5rem;
+        }
+
+        .tag {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 99px;
+            text-transform: uppercase;
+        }
+
+        .tag.subject {
+            background-color: #e0e7ff;
+            color: #3730a3;
+        }
+        
+        /* Difficulty Tags */
+        .tag.difficulty-easy {
+            background-color: var(--tag-green);
+            color: var(--tag-green-text);
+        }
+        .tag.difficulty-medium {
+            background-color: var(--tag-yellow);
+            color: var(--tag-yellow-text);
+        }
+        .tag.difficulty-advanced {
+            background-color: var(--tag-red);
+            color: var(--tag-red-text);
+        }
+        
+        .card-body {
+            padding: 1rem 1.5rem;
+            /* This makes the card fill height */
+            flex-grow: 1; 
+        }
+
+        .card-body h3 {
+            font-size: 1.25rem;
+            margin: 0 0 0.5rem 0;
+            color: var(--text-dark);
+        }
+
+        .card-body p {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            line-height: 1.5;
+            margin: 0;
+        }
+        
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+        
+        .start-button {
+            display: block;
+            background-color: var(--primary-blue);
+            color: #ffffff;
+            text-decoration: none;
+            text-align: center;
+            font-weight: 600;
+            padding: 0.75rem;
+            margin: 0 1.5rem 1.5rem 1.5rem;
+            border-radius: 8px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .start-button:hover {
+            background-color: #1e40af;
+        }
+        
+        /* Disabled card for "Coming Soon" */
+        .experiment-card.disabled {
+            opacity: 0.6;
+            background-color: var(--bg-light);
+        }
+        .experiment-card.disabled .start-button {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+    </style>
+</head>
+<body>
+    
+    <header class="navbar">
+        <div class="logo">Virtual Lab</div>
+        <nav class="nav-links">
+            <a href="#">Dashboard</a>
+            <a href="#" class="active">Experiments</a>
+            <a href="/quiz">Quiz</a>
+            <a href="#">Admin</a>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <div class="library-header">
+            <h1>Experiment Library</h1>
+            <p>Choose an experiment and start learning interactively</p>
+        </div>
+
+        <div class="experiment-grid">
+            
+            <div class="experiment-card" style="--border-color: #2563eb;">
+                <div class="card-header">
+                    <span class="tag subject">Physics</span>
+                    <span class="tag difficulty-easy">Easy</span>
+                </div>
+                <div class="card-body">
+                    <h3>Simple Pendulum</h3>
+                    <p>Study simple harmonic motion and understand the relationship between period, length, and gravity.</p>
+                </div>
+                <div class="card-footer">
+                    <span>15 min</span>
+                    <span>Progress tracked</span>
+                </div>
+                <a href="/simplependulum" class="start-button">Start Experiment</a>
+            </div>
+
+            <div class="experiment-card" style="--border-color: #a855f7;">
+                <div class="card-header">
+                    <span class="tag subject">Physics</span>
+                    <span class="tag difficulty-medium">Medium</span>
+                </div>
+                <div class="card-body">
+                    <h3>Ohm's Law</h3>
+                    <p>Explore the relationship between voltage, current, and resistance in electrical circuits.</p>
+                </div>
+                <div class="card-footer">
+                    <span>15 min</span>
+                    <span>Progress tracked</span>
+                </div>
+                <a href="/ohmslaw" class="start-button">Start Experiment</a>
+            </div>
+
+            <div class="experiment-card" style="--border-color: #16a34a;">
+                <div class="card-header">
+                    <span class="tag subject">Chemistry</span>
+                    <span class="tag difficulty-easy">Easy</span>
+                </div>
+                <div class="card-body">
+                    <h3>pH Scale Indicator</h3>
+                    <p>Visually test liquids and learn the difference between acids, bases, and neutral solutions.</p>
+                </div>
+                <div class="card-footer">
+                    <span>10 min</span>
+                    <span>Progress tracked</span>
+                </div>
+                <a href="/phscale" class="start-button">Start Experiment</a>
+            </div>
+
+            <div class="experiment-card" style="--border-color: #dc2626;">
+                <div class="card-header">
+                    <span class="tag subject">Engineering</span>
+                    <span class="tag difficulty-medium">Medium</span>
+                </div>
+                <div class="card-body">
+                    <h3>Beam Deflection</h3>
+                    <p>Apply loads to a cantilever beam and observe how it bends based on length and force.</p>
+                </div>
+                <div class="card-footer">
+                    <span>20 min</span>
+                    <span>Progress tracked</span>
+                </div>
+                <a href="/beam" class="start-button">Start Experiment</a>
+            </div>
+
+            <div class="experiment-card" style="--border-color: #0e7490;">
+                <div class="card-header">
+                    <span class="tag subject">Chemistry</span>
+                    <span class="tag difficulty-easy">Easy</span>
+                </div>
+                <div class="card-body">
+                    <h3>States of Matter</h3>
+                    <p>Change the temperature of a substance and watch its particles change between solid, liquid, and gas.</p>
+                </div>
+                <div class="card-footer">
+                    <span>10 min</span>
+                    <span>Progress tracked</span>
+                </div>
+                <a href="/statesofmatter" class="start-button">Start Experiment</a>
+            </div>
+
+         <div class="experiment-card" style="--border-color: #64748b;">
+                <div class="card-header">
+                    <span class="tag subject">Engineering</span>
+                    <span class="tag difficulty-easy">Easy</span>
+                </div>
+                <div class="card-body">
+                    <h3>Simple Gear Train</h3>
+                    <p>See how gear sizes affect output speed and direction in a mechanical system.</p>
+                </div>
+                <div class="card-footer">
+                    <span>10 min</span>
+                    <span>Progress tracked</span>
+                </div>
+                <a href="/geartrain" class="start-button">Start Experiment</a>
+            </div>
+
+        </div>
+    </main>
+
+</body>
+</html>

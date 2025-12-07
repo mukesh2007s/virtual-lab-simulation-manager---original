@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback - Virtual Lab</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="brand"><i class='bx bx-atom'></i> Virtual Lab</div>
+        <ul class="nav-menu" id="nav-menu">
+            <!-- Dynamic sidebar loaded by JS -->
+        </ul>
+        <div class="user-profile">
+            <a href="/logout" class="logout-btn"><i class='bx bx-log-out'></i> Sign Out</a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">Send Feedback</h1>
+            <p class="page-subtitle">Share your thoughts, suggestions, or report any issues.</p>
+        </div>
+
+        <div class="grid" style="max-width:800px;">
+            <div class="card" id="feedbackCard">
+                <form id="feedbackForm" onsubmit="submitFeedback(event)">
+                    <div style="margin-bottom:1.5rem;">
+                        <label style="display:block; margin-bottom:0.5rem; font-weight:600; color:var(--text-dark);">
+                            <i class='bx bx-category'></i> Subject
+                        </label>
+                        <select id="feedback-subject" required style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:8px; font-size:1rem;">
+                            <option value="">Select a topic...</option>
+                            <option value="General Feedback">General Feedback</option>
+                            <option value="Bug Report">Bug Report</option>
+                            <option value="Feature Request">Feature Request</option>
+                            <option value="Experiment Issue">Experiment Issue</option>
+                            <option value="Quiz/Test Issue">Quiz/Test Issue</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom:1.5rem;">
+                        <label style="display:block; margin-bottom:0.5rem; font-weight:600; color:var(--text-dark);">
+                            <i class='bx bx-message-detail'></i> Your Message
+                        </label>
+                        <textarea id="feedback-message" required rows="6" placeholder="Describe your feedback in detail..." 
+                            style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:8px; font-size:1rem; resize:vertical;"></textarea>
+                    </div>
+                    <button type="submit" id="feedback-submit-btn" class="start-btn" style="width:100%;">
+                        <i class='bx bx-send'></i> Send Feedback
+                    </button>
+                </form>
+
+                <div id="feedbackSuccess" style="display:none; text-align:center; padding:40px 20px;">
+                    <div style="width:80px; height:80px; background:#dcfce7; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1.5rem;">
+                        <i class='bx bx-check' style="font-size:3rem; color:#16a34a;"></i>
+                    </div>
+                    <h3 style="color:#16a34a; margin-bottom:0.5rem;">Feedback Sent!</h3>
+                    <p style="color:var(--text-muted); margin-bottom:1.5rem;">Thank you for your feedback. We appreciate your input!</p>
+                    <button onclick="resetForm()" class="start-btn" style="background:#6366f1;">
+                        <i class='bx bx-plus'></i> Send Another
+                    </button>
+                </div>
+            </div>
+
+            <div class="card" style="background:linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border:none;">
+                <h3 style="color:var(--primary); margin-bottom:1rem;"><i class='bx bx-info-circle'></i> Tips for Good Feedback</h3>
+                <ul style="color:var(--text-muted); line-height:1.8; padding-left:1.2rem;">
+                    <li>Be specific about what you experienced</li>
+                    <li>Include steps to reproduce if reporting a bug</li>
+                    <li>Mention which experiment or feature is affected</li>
+                    <li>Suggest improvements if you have ideas</li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function submitFeedback(e) {
+            e.preventDefault();
+            const btn = document.getElementById('feedback-submit-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Sending...';
+            
+            const formData = new URLSearchParams({
+                subject: document.getElementById('feedback-subject').value,
+                message: document.getElementById('feedback-message').value
+            });
+            
+            fetch('/api/student/submit_feedback', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                if(data.success) {
+                    document.getElementById('feedbackForm').style.display = 'none';
+                    document.getElementById('feedbackSuccess').style.display = 'block';
+                } else {
+                    alert('Failed to send feedback. Please try again.');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bx bx-send"></i> Send Feedback';
+                }
+            })
+            .catch(err => {
+                alert('Error sending feedback. Please try again.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bx bx-send"></i> Send Feedback';
+            });
+        }
+
+        function resetForm() {
+            document.getElementById('feedbackForm').style.display = 'block';
+            document.getElementById('feedbackForm').reset();
+            document.getElementById('feedbackSuccess').style.display = 'none';
+            document.getElementById('feedback-submit-btn').disabled = false;
+            document.getElementById('feedback-submit-btn').innerHTML = '<i class="bx bx-send"></i> Send Feedback';
+        }
+
+        // Load sidebar based on role
+        function loadSidebar() {
+            fetch('/getprofile')
+                .then(res => res.json())
+                .then(data => {
+                    const navMenu = document.getElementById('nav-menu');
+                    let menuHTML = `
+                        <li class="nav-item"><a href="/student_menu" class="nav-link"><i class='bx bx-grid-alt'></i> Dashboard</a></li>
+                        <li class="nav-item"><a href="/lectures" class="nav-link"><i class='bx bx-video'></i> Lectures</a></li>
+                        <li class="nav-item"><a href="/materials" class="nav-link"><i class='bx bx-book-open'></i> Materials</a></li>
+                        <li class="nav-item"><a href="/quiz" class="nav-link"><i class='bx bx-brain'></i> Quizzes</a></li>
+                        <li class="nav-item"><a href="/tests" class="nav-link"><i class='bx bx-edit-alt'></i> Tests</a></li>
+                        <li class="nav-item"><a href="/dashboard" class="nav-link"><i class='bx bx-bar-chart-alt-2'></i> Performance</a></li>
+                        <li class="nav-item"><a href="/feedback" class="nav-link active"><i class='bx bx-message-square-dots'></i> Feedback</a></li>
+                        <li class="nav-item"><a href="/profile" class="nav-link"><i class='bx bx-user-circle'></i> My Profile</a></li>
+                    `;
+                    navMenu.innerHTML = menuHTML;
+                });
+        }
+        loadSidebar();
+    </script>
+</body>
+</html>

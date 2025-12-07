@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Study Materials - Virtual Lab</title>
+    <link rel="stylesheet" href="/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        .materials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .material-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid var(--border);
+        }
+        .material-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+        }
+        .material-header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+        .file-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }
+        .file-icon.pdf { background: #fee2e2; color: #dc2626; }
+        .file-icon.doc { background: #dbeafe; color: #2563eb; }
+        .file-icon.ppt { background: #fce7f3; color: #db2777; }
+        .file-icon.xls { background: #dcfce7; color: #16a34a; }
+        .file-icon.img { background: #fef3c7; color: #d97706; }
+        .file-icon.txt { background: #f3f4f6; color: #6b7280; }
+        .file-icon.default { background: #e0e7ff; color: #4f46e5; }
+        .material-info h3 {
+            margin: 0 0 5px;
+            font-size: 1rem;
+            color: var(--text);
+        }
+        .material-info .file-type {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        .material-content {
+            padding: 15px 20px;
+        }
+        .material-description {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+        .material-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+        .material-category {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #f3e8ff;
+            color: #7c3aed;
+            margin-bottom: 10px;
+        }
+        .material-actions {
+            display: flex;
+            gap: 10px;
+            padding: 15px 20px;
+            background: #f8fafc;
+            border-top: 1px solid var(--border);
+        }
+        .action-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+        .view-btn {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+        }
+        .view-btn:hover { opacity: 0.9; }
+        .download-btn {
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+        .download-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .filter-tab {
+            padding: 8px 20px;
+            border-radius: 20px;
+            background: white;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .filter-tab:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .filter-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+        .empty-state i {
+            font-size: 4rem;
+            opacity: 0.3;
+            margin-bottom: 1rem;
+        }
+        .search-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 1.5rem;
+            align-items: center;
+        }
+        .search-input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus {
+            border-color: var(--primary);
+        }
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 1.5rem;
+        }
+        .stat-item {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .stat-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+        .stat-icon.total { background: #e0e7ff; color: #4f46e5; }
+        .stat-icon.pdf { background: #fee2e2; color: #dc2626; }
+        .stat-icon.doc { background: #dbeafe; color: #2563eb; }
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="brand">
+            <i class='bx bx-atom'></i> Virtual Lab
+        </div>
+        <ul class="nav-menu" id="nav-menu">
+            <!-- Dynamic sidebar loaded by JS -->
+        </ul>
+        <div class="user-profile">
+            <a href="/logout" class="logout-btn"><i class='bx bx-log-out'></i> Sign Out</a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">Study Materials</h1>
+            <p class="page-subtitle">Download and view educational resources uploaded by your teachers.</p>
+        </div>
+
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-item">
+                <div class="stat-icon total"><i class='bx bx-book-open'></i></div>
+                <div>
+                    <div class="stat-number" id="totalCount">0</div>
+                    <div class="stat-label">Total Materials</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon pdf"><i class='bx bxs-file-pdf'></i></div>
+                <div>
+                    <div class="stat-number" id="pdfCount">0</div>
+                    <div class="stat-label">PDFs</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon doc"><i class='bx bxs-file-doc'></i></div>
+                <div>
+                    <div class="stat-number" id="docCount">0</div>
+                    <div class="stat-label">Documents</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" class="search-input" id="searchInput" placeholder="Search materials by title or description..." oninput="filterMaterials()">
+        </div>
+
+        <div class="filter-tabs">
+            <div class="filter-tab active" onclick="filterByCategory('all')">All</div>
+            <div class="filter-tab" onclick="filterByCategory('Physics')">Physics</div>
+            <div class="filter-tab" onclick="filterByCategory('Chemistry')">Chemistry</div>
+            <div class="filter-tab" onclick="filterByCategory('Engineering')">Engineering</div>
+            <div class="filter-tab" onclick="filterByCategory('Notes')">Notes</div>
+            <div class="filter-tab" onclick="filterByCategory('Assignments')">Assignments</div>
+            <div class="filter-tab" onclick="filterByCategory('Reference')">Reference</div>
+        </div>
+
+        <div id="materialsContainer" class="materials-grid">
+            <!-- Materials will be loaded here -->
+        </div>
+
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <i class='bx bx-folder-open'></i>
+            <h3>No Materials Available</h3>
+            <p>Your teachers haven't uploaded any study materials yet.</p>
+        </div>
+    </main>
+
+    <script>
+        let allMaterials = [];
+        let currentCategory = 'all';
+
+        function loadMaterials() {
+            fetch('/api/materials')
+                .then(r => r.json())
+                .then(data => {
+                    allMaterials = data;
+                    updateStats(data);
+                    renderMaterials(data);
+                })
+                .catch(err => {
+                    console.error('Error loading materials:', err);
+                    document.getElementById('emptyState').style.display = 'block';
+                });
+        }
+
+        function updateStats(materials) {
+            document.getElementById('totalCount').textContent = materials.length;
+            document.getElementById('pdfCount').textContent = materials.filter(m => m.fileType === 'PDF').length;
+            document.getElementById('docCount').textContent = materials.filter(m => ['DOC', 'DOCX'].includes(m.fileType)).length;
+        }
+
+        function renderMaterials(materials) {
+            const container = document.getElementById('materialsContainer');
+            const emptyState = document.getElementById('emptyState');
+
+            if (materials.length === 0) {
+                container.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            container.innerHTML = materials.map(material => `
+                <div class="material-card">
+                    <div class="material-header">
+                        <div class="file-icon ${getFileIconClass(material.fileType)}">
+                            <i class='bx ${getFileIconName(material.fileType)}'></i>
+                        </div>
+                        <div class="material-info">
+                            <h3>${material.title}</h3>
+                            <span class="file-type">${material.fileType} • ${material.fileSize}</span>
+                        </div>
+                    </div>
+                    <div class="material-content">
+                        <span class="material-category">${material.category}</span>
+                        <p class="material-description">${material.description || 'No description available.'}</p>
+                        <div class="material-meta">
+                            <span><i class='bx bx-user'></i> ${material.teacher}</span>
+                            <span><i class='bx bx-calendar'></i> ${material.date}</span>
+                        </div>
+                    </div>
+                    <div class="material-actions">
+                        <a href="${material.filePath}" target="_blank" class="action-btn view-btn">
+                            <i class='bx bx-show'></i> View
+                        </a>
+                        <a href="/materials/download?id=${material.id}" class="action-btn download-btn">
+                            <i class='bx bx-download'></i> Download
+                        </a>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getFileIconClass(type) {
+            const classes = {
+                'PDF': 'pdf',
+                'DOC': 'doc', 'DOCX': 'doc',
+                'PPT': 'ppt', 'PPTX': 'ppt',
+                'XLS': 'xls', 'XLSX': 'xls',
+                'TXT': 'txt',
+                'JPG': 'img', 'JPEG': 'img', 'PNG': 'img', 'GIF': 'img'
+            };
+            return classes[type] || 'default';
+        }
+
+        function getFileIconName(type) {
+            const icons = {
+                'PDF': 'bxs-file-pdf',
+                'DOC': 'bxs-file-doc', 'DOCX': 'bxs-file-doc',
+                'PPT': 'bxs-slideshow', 'PPTX': 'bxs-slideshow',
+                'XLS': 'bxs-spreadsheet', 'XLSX': 'bxs-spreadsheet',
+                'TXT': 'bx-file',
+                'JPG': 'bxs-image', 'JPEG': 'bxs-image', 'PNG': 'bxs-image', 'GIF': 'bxs-image'
+            };
+            return icons[type] || 'bx-file';
+        }
+
+        function filterByCategory(category) {
+            currentCategory = category;
+            document.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            filterMaterials();
+        }
+
+        function filterMaterials() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            let filtered = allMaterials;
+
+            if (currentCategory !== 'all') {
+                filtered = filtered.filter(m => m.category === currentCategory);
+            }
+
+            if (searchTerm) {
+                filtered = filtered.filter(m => 
+                    m.title.toLowerCase().includes(searchTerm) || 
+                    (m.description && m.description.toLowerCase().includes(searchTerm))
+                );
+            }
+
+            renderMaterials(filtered);
+        }
+
+        // Load sidebar based on role
+        function loadSidebar() {
+            fetch('/getprofile')
+                .then(res => res.json())
+                .then(data => {
+                    const navMenu = document.getElementById('nav-menu');
+                    let menuHTML = '';
+                    
+                    if (data.role === 'TEACHER') {
+                        menuHTML = `
+                            <li class="nav-item"><a href="/teacher_menu" class="nav-link"><i class='bx bx-grid-alt'></i> Dashboard</a></li>
+                            <li class="nav-item"><a href="/lectures" class="nav-link"><i class='bx bx-video'></i> Lectures</a></li>
+                            <li class="nav-item"><a href="/materials" class="nav-link active"><i class='bx bx-book-open'></i> Materials</a></li>
+                            <li class="nav-item"><a href="/quiz" class="nav-link"><i class='bx bx-brain'></i> Quizzes</a></li>
+                            <li class="nav-item"><a href="/tests" class="nav-link"><i class='bx bx-edit-alt'></i> Tests</a></li>
+                            <li class="nav-item"><a href="/feedback" class="nav-link"><i class='bx bx-message-square-dots'></i> Feedback</a></li>
+                            <li class="nav-item"><a href="/profile" class="nav-link"><i class='bx bx-user-circle'></i> My Profile</a></li>
+                        `;
+                    } else {
+                        menuHTML = `
+                            <li class="nav-item"><a href="/student_menu" class="nav-link"><i class='bx bx-grid-alt'></i> Dashboard</a></li>
+                            <li class="nav-item"><a href="/lectures" class="nav-link"><i class='bx bx-video'></i> Lectures</a></li>
+                            <li class="nav-item"><a href="/materials" class="nav-link active"><i class='bx bx-book-open'></i> Materials</a></li>
+                            <li class="nav-item"><a href="/quiz" class="nav-link"><i class='bx bx-brain'></i> Quizzes</a></li>
+                            <li class="nav-item"><a href="/tests" class="nav-link"><i class='bx bx-edit-alt'></i> Tests</a></li>
+                            <li class="nav-item"><a href="/dashboard" class="nav-link"><i class='bx bx-bar-chart-alt-2'></i> Performance</a></li>
+                            <li class="nav-item"><a href="/feedback" class="nav-link"><i class='bx bx-message-square-dots'></i> Feedback</a></li>
+                            <li class="nav-item"><a href="/profile" class="nav-link"><i class='bx bx-user-circle'></i> My Profile</a></li>
+                        `;
+                    }
+                    navMenu.innerHTML = menuHTML;
+                });
+        }
+
+        // Load materials and sidebar on page load
+        loadMaterials();
+        loadSidebar();
+    </script>
+</body>
+</html>

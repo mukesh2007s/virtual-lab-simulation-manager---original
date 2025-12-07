@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ohm's Law Simulation</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <style>
+        /* 1. Professional Look & Feel */
+        :root {
+            --primary-color: #0056b3; /* Main blue */
+            --secondary-color: #d9534f; /* Red for current */
+            --bg-color: #f7f9fc;       /* Lighter, cleaner background */
+            --container-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --mention-color: #007bff;   /* NEW: Distinct blue for readouts */
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 20px 0;
+        }
+
+        .container {
+            width: 90%;
+            /* --- UPDATED: Wider Layout --- */
+            max-width: 850px; 
+            /* --- UPDATED: More padding --- */
+            padding: 40px; 
+            background-color: var(--container-bg);
+            border-radius: 12px;
+            /* --- UPDATED: Softer shadow --- */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07); 
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 30px; /* Increased spacing */
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px; /* Increased padding */
+            margin-top: 35px;   /* Increased spacing */
+            font-size: 1.5rem;  /* Slightly larger */
+        }
+
+        .formula {
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            text-align: center;
+            font-size: 1.25rem;
+            background-color: var(--bg-color);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+        }
+
+        ul, ol {
+            padding-left: 25px;
+            line-height: 1.7;
+        }
+        li { margin-bottom: 10px; }
+        
+        .simulation-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            /* --- UPDATED: More gap --- */
+            gap: 40px; 
+            align-items: center;
+            margin-top: 25px;
+        }
+
+        .controls, .output {
+            padding: 25px; /* Increased padding */
+            background-color: #fdfdfd;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .input-group {
+            margin-bottom: 30px;
+        }
+        .input-group label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-weight: 600;
+            font-size: 1.1rem; /* Slightly larger */
+        }
+        .input-group span {
+            font-weight: 700;
+            /* --- UPDATED: New color for mentions --- */
+            color: var(--mention-color); 
+            background-color: #f0f7ff;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .input-group input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .output {
+            text-align: center;
+        }
+        .output h3 {
+            margin-top: 0;
+            font-size: 1.25rem;
+            color: var(--text-color);
+        }
+        #currentResult {
+            font-size: 3.2rem; /* Slightly larger */
+            font-weight: 700;
+            color: var(--secondary-color);
+            display: block;
+            margin-bottom: 10px;
+        }
+        
+        /* 2. Visual Simulation Styles */
+        .circuit-visual {
+            grid-column: 1 / -1; 
+            height: 120px;
+            background-color: #f9f9f9;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            position: relative;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .wire {
+            position: absolute;
+            top: 50%;
+            left: 5%;
+            width: 90%;
+            height: 6px;
+            background-color: #aaa;
+            border-radius: 3px;
+            margin-top: -3px;
+        }
+
+        .battery, .resistor {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: var(--container-bg);
+            padding: 0 5px;
+        }
+
+        .battery {
+            left: 20%;
+            font-size: 2.5rem;
+            color: #555;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .battery::before { content: "+"; position: absolute; top: -25px; left: 18px; }
+        .battery::after { content: "-"; position: absolute; top: 8px; left: -8px; }
+
+        .resistor {
+            left: 70%;
+            font-size: 1.5rem;
+            color: #333;
+            letter-spacing: -2px;
+        }
+
+        .electron {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            top: -2px; 
+            animation-name: moveElectron;
+            animation-iteration-count: infinite;
+            animation-timing-function: linear;
+        }
+        
+        .electron:nth-child(2) { animation-delay: -1s; }
+        .electron:nth-child(3) { animation-delay: -2s; }
+        .electron:nth-child(4) { animation-delay: -3s; }
+        .electron:nth-child(5) { animation-delay: -4s; }
+
+        @keyframes moveElectron {
+            from { left: 0%; }
+            to { left: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Ohm's Law Simulation</h1>
+
+        <h2>Definition</h2>
+        <p>Ohm's Law states that the current flowing through a conductor is directly proportional to the voltage across its ends, provided the physical conditions (like temperature) remain unchanged.</p>
+        <div class="formula">Voltage (V) = Current (I) &times; Resistance (R)</div>
+
+        <h2>Visual Simulation</h2>
+        <div class="circuit-visual">
+            <div class="wire">
+                <span class="electron"></span>
+                <span class="electron"></span>
+                <span class="electron"></span>
+                <span class="electron"></span>
+                <span class="electron"></span>
+            </div>
+            <div class="battery">|i|</div>
+            <div class="resistor">--/\/\/\--</div>
+        </div>
+
+        <div class="simulation-area">
+            
+            <div class="controls">
+                <h2>Controls</h2>
+                <div class="input-group">
+                    <label for="voltageSlider">Voltage (V): <span id="voltageValue">10.0 V</span></label>
+                    <input type="range" id="voltageSlider" min="1" max="100" value="10" step="0.1">
+                </div>
+
+                <div class="input-group">
+                    <label for="resistanceSlider">Resistance (Ω): <span id="resistanceValue">100.0 Ω</span></label>
+                    <input type="range" id="resistanceSlider" min="1" max="1000" value="100" step="0.5">
+                </div>
+            </div>
+
+            <div class="output">
+                <h2>Virtual Output</h2>
+                <h3>Calculated Current (A):</h3>
+                <span id="currentResult">0.1000 A</span>
+            </div>
+        </div>
+
+        <h2>Apparatus</h2>
+        <ul>
+            <li>A DC Voltage Source (represented by the Voltage slider)</li>
+            <li>A Resistor (represented by the Resistance slider)</li>
+            <li>An Ammeter (represented by the virtual output display)</li>
+        </ul>
+
+        <h2>Procedure</h2>
+        <ol>
+            <li>Adjust the <strong>Voltage (V)</strong> and <strong>Resistance (Ω)</strong> sliders.</li>
+            <li>Observe the <strong>Calculated Current (A)</strong> in the output box.</li>
+            <li>Notice the <strong>speed of the electrons</strong> in the visual simulation. As current (I) increases, the electrons move faster.</li>
+        </ol>
+        <a href="/student_menu" style="display: block; text-align: center; margin-top: 30px; font-weight: 600; color: var(--primary-color);">Back to Main Menu</a>
+
+    </div>
+
+    <script>
+        // Get references to all the HTML elements
+        const voltageSlider = document.getElementById('voltageSlider');
+        const voltageValue = document.getElementById('voltageValue');
+        const resistanceSlider = document.getElementById('resistanceSlider');
+        const resistanceValue = document.getElementById('resistanceValue');
+        const currentResult = document.getElementById('currentResult');
+        const electrons = document.querySelectorAll('.electron');
+
+        /**
+         * This function is called whenever a slider is moved.
+         * It sends the input values to the Java backend and updates the UI.
+         */
+        async function updateSimulation() {
+            // 1. Get inputs from the UI sliders
+            let voltage = voltageSlider.value;
+            let resistance = resistanceSlider.value;
+
+            // 2. Update the "value" labels next to the sliders
+            voltageValue.textContent = `${parseFloat(voltage).toFixed(1)} V`;
+            resistanceValue.textContent = `${parseFloat(resistance).toFixed(1)} \u03A9`;
+
+            try {
+                // 3. Call the Java backend API
+                const response = await fetch(`/calculate?voltage=${voltage}&resistance=${resistance}`);
+                if (!response.ok) throw new Error("Server error");
+                
+                const data = await response.json();
+                
+                // 4. Display the virtual output
+                currentResult.textContent = `${data.current.toFixed(4)} A`;
+
+                // 5. Update the animation speed
+                let duration = Math.max(0.1, Math.min(10, 1 / data.current));
+                electrons.forEach(electron => {
+                    electron.style.animationDuration = duration + 's';
+                });
+
+            } catch (error) {
+                console.error("Failed to fetch calculation:", error);
+                currentResult.textContent = "Error";
+            }
+        }
+
+        // --- Event Listeners ---
+        voltageSlider.addEventListener('input', updateSimulation);
+        resistanceSlider.addEventListener('input', updateSimulation);
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', updateSimulation);
+
+        // === VOICE ASSISTANT (English Only) ===
+        const narration = `Ohm's Law Experiment.
+
+This experiment shows the relationship between voltage, current, and resistance in electrical circuits.
+
+The formula is V equals I times R, where V is voltage, I is current, and R is resistance.
+
+When you increase voltage, more current flows through the circuit. When you increase resistance, less current flows.
+
+In this simulation, watch the blue dots representing electrons. They move faster with high voltage and slower with high resistance.
+
+Ohm's Law is used in designing all electrical and electronic devices.`;
+
+        let speechSynth = window.speechSynthesis;
+        let currentUtterance = null;
+
+        function loadVoices() { return speechSynth.getVoices(); }
+        speechSynth.onvoiceschanged = loadVoices;
+        setTimeout(loadVoices, 100);
+
+        function toggleVoicePanel() { document.getElementById('voicePanel').classList.toggle('active'); }
+        
+        function playNarration() {
+            stopNarration();
+            const voices = speechSynth.getVoices();
+            currentUtterance = new SpeechSynthesisUtterance(narration);
+            
+            const femaleEn = voices.find(v => 
+                (v.name.includes('Zira') || v.name.includes('Female') || 
+                 v.name.includes('Samantha') || v.name.includes('Google')) && 
+                v.lang.startsWith('en')
+            );
+            if (femaleEn) currentUtterance.voice = femaleEn;
+            
+            currentUtterance.lang = 'en-US';
+            currentUtterance.rate = 0.9;
+            currentUtterance.pitch = 1.1;
+            
+            currentUtterance.onstart = () => { 
+                document.getElementById('voiceBtn').classList.add('speaking'); 
+                updateStatus('🔊 Speaking...'); 
+            };
+            currentUtterance.onend = () => { 
+                document.getElementById('voiceBtn').classList.remove('speaking'); 
+                updateStatus('Completed'); 
+            };
+            currentUtterance.onerror = () => { 
+                document.getElementById('voiceBtn').classList.remove('speaking'); 
+                updateStatus('Error'); 
+            };
+            
+            speechSynth.speak(currentUtterance);
+        }
+        
+        function stopNarration() {
+            speechSynth.cancel();
+            document.getElementById('voiceBtn').classList.remove('speaking');
+            updateStatus('Stopped');
+        }
+        
+        function updateStatus(text) { document.getElementById('voiceStatus').textContent = text; }
+    </script>
+
+    <style>
+        .voice-assistant-btn { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #4f46e5, #7c3aed); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); transition: all 0.3s ease; z-index: 1000; }
+        .voice-assistant-btn:hover { transform: scale(1.1); }
+        .voice-assistant-btn i { font-size: 1.8rem; color: white; }
+        .voice-assistant-btn.speaking { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); } 50% { box-shadow: 0 4px 30px rgba(79, 70, 229, 0.8); } }
+        .voice-panel { position: fixed; bottom: 100px; right: 30px; width: 280px; background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); padding: 20px; display: none; z-index: 999; }
+        .voice-panel.active { display: block; }
+        .voice-panel h3 { margin: 0 0 15px 0; color: #4f46e5; font-size: 1.1rem; }
+        .voice-controls { display: flex; gap: 10px; }
+        .voice-controls button { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .play-btn { background: #10b981; color: white; }
+        .stop-btn { background: #ef4444; color: white; }
+        .voice-status { margin-top: 15px; padding: 10px; background: #f8fafc; border-radius: 8px; font-size: 0.85rem; color: #64748b; text-align: center; }
+    </style>
+
+    <button class="voice-assistant-btn" id="voiceBtn" onclick="toggleVoicePanel()" title="Voice Assistant"><i class='bx bxs-volume-full'></i></button>
+    <div class="voice-panel" id="voicePanel">
+        <h3><i class='bx bx-volume-full'></i> Voice Explanation</h3>
+        <div class="voice-controls">
+            <button class="play-btn" onclick="playNarration()"><i class='bx bx-play'></i> Play</button>
+            <button class="stop-btn" onclick="stopNarration()"><i class='bx bx-stop'></i> Stop</button>
+        </div>
+        <div class="voice-status" id="voiceStatus">Press Play to listen</div>
+    </div>
+
+</body>
+</html>

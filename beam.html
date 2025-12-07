@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beam Deflection Simulation</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <style>
+        :root {
+            --primary-color: #6a040f; /* Dark Red */
+            --bg-color: #f7f9fc;
+            --container-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --mention-color: #9d0208;
+            --beam-color: #495057;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 20px 0;
+        }
+        .container {
+            width: 90%;
+            max-width: 850px; 
+            padding: 40px; 
+            background-color: var(--container-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07); 
+        }
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 35px;
+            font-size: 1.5rem;
+        }
+        .formula {
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            text-align: center;
+            font-size: 1.1rem;
+            background-color: #fff5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+        }
+        ul, ol {
+            padding-left: 25px;
+            line-height: 1.7;
+        }
+        li { margin-bottom: 10px; }
+        
+        /* Layout */
+        .simulation-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: flex-start; /* Align to top */
+            margin-top: 25px;
+        }
+
+        /* --- Beam Animation --- */
+        .beam-visual {
+            width: 100%;
+            height: 300px;
+            position: relative;
+            background-color: #f9f9f9;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .wall {
+            width: 20px;
+            height: 100%;
+            background: #adb5bd;
+            border-right: 2px dashed #333;
+        }
+        .beam-anchor {
+            position: absolute;
+            top: 100px;
+            left: 20px; /* Start from the wall */
+            transform-origin: left center; /* Rotate from the fixed end */
+            transition: transform 0.3s ease-out;
+        }
+        .beam {
+            height: 20px;
+            background: var(--beam-color);
+            border-radius: 2px;
+            position: relative;
+            /* Width (length) will be set by JS */
+        }
+        .load-arrow {
+            position: absolute;
+            right: 5px;
+            top: 20px;
+            width: 4px;
+            background: var(--mention-color);
+            /* Height (load) will be set by JS */
+            transition: height 0.3s ease;
+        }
+        .load-arrow::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: -8px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid var(--mention-color);
+        }
+        /* ------------------------ */
+
+        /* Controls */
+        .controls {
+            padding: 25px;
+            background-color: #fdfdfd;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+        .input-group {
+            margin-bottom: 30px;
+        }
+        .input-group label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .input-group span {
+            font-weight: 700;
+            color: var(--mention-color);
+            background-color: #fff5f5;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        
+        /* Output */
+        .output {
+            text-align: center;
+            padding: 20px;
+            background-color: var(--bg-color);
+            border-radius: 8px;
+        }
+        .output h3 {
+            margin: 0 0 10px 0;
+            color: var(--primary-color);
+        }
+        #deflectionResult {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--mention-color);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Beam Deflection Experiment</h1>
+
+        <h2>Definition</h2>
+        <p>A cantilever beam is a structural element fixed at one end and free at the other. **Deflection** is the distance the free end moves or bends when a load is applied to it.</p>
+        <div class="formula">Deflection ($\delta$) is proportional to Load ($P$) &times; Length ($L$)&sup3;</div>
+
+        <h2>Virtual Apparatus</h2>
+        <ul>
+            <li>A cantilever beam (fixed to the wall).</li>
+            <li>An adjustable point load ($P$) applied at the free end.</li>
+            <li>An adjustable beam length ($L$).</li>
+            <li>(Virtual) A constant material (e.g., Steel).</li>
+        </ul>
+
+        <div class="simulation-area">
+            <div class="beam-visual">
+                <div class="wall"></div>
+                <div id="beam-anchor" class="beam-anchor">
+                    <div id="beam" class="beam">
+                        <div id="load-arrow" class="load-arrow"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <h2>Controls</h2>
+                <div class="input-group">
+                    <label for="lengthSlider">Length (L): <span id="lengthValue">1.0 m</span></label>
+                    <input type="range" id="lengthSlider" min="0.5" max="2.0" value="1.0" step="0.1">
+                </div>
+
+                <div class="input-group">
+                    <label for="loadSlider">Load (P): <span id="loadValue">100 N</span></label>
+                    <input type="range" id="loadSlider" min="10" max="200" value="100" step="5">
+                </div>
+                
+                <div class="output">
+                    <h3>Virtual Deflection:</h3>
+                    <span id="deflectionResult">2.00 &deg;</span>
+                </div>
+            </div>
+        </div>
+        
+        <h2>Procedure</h2>
+        <ol>
+            <li>Adjust the <strong>Length (L)</strong> of the beam.</li>
+            <li>Adjust the <strong>Load (P)</strong> applied to the end.</li>
+            <li>Observe how the beam visually deflects (bends).</li>
+            <li>Note the <strong>Virtual Deflection</strong> value, which represents the angle of the bend.</li>
+        </ol>
+
+        <a href="/student_menu" style="display: block; text-align: center; margin-top: 30px; font-weight: 600; color: var(--primary-color);">Back to Main Menu</a>
+    </div>
+
+    <script>
+        // Get references to elements
+        const lengthSlider = document.getElementById('lengthSlider');
+        const lengthValue = document.getElementById('lengthValue');
+        const loadSlider = document.getElementById('loadSlider');
+        const loadValue = document.getElementById('loadValue');
+        
+        const deflectionResult = document.getElementById('deflectionResult');
+        const beamAnchor = document.getElementById('beam-anchor');
+        const beam = document.getElementById('beam');
+        const loadArrow = document.getElementById('load-arrow');
+
+        /**
+         * Called when a slider moves.
+         * Fetches calculation from Java backend and updates all UI elements.
+         */
+        async function updateSimulation() {
+            let length = lengthSlider.value;
+            let load = loadSlider.value;
+
+            // 1. Update text labels
+            lengthValue.textContent = `${parseFloat(length).toFixed(1)} m`;
+            loadValue.textContent = `${parseFloat(load).toFixed(0)} N`;
+
+            try {
+                // 2. Call the Java backend API
+                const response = await fetch(`/calculatebeam?length=${length}&load=${load}`);
+                if (!response.ok) throw new Error("Server error");
+                
+                const data = await response.json();
+                
+                // 3. Display the virtual output
+                deflectionResult.textContent = `${data.deflectionDegrees.toFixed(2)} °`;
+
+                // 4. Update the visual animation
+                
+                // --- Update Beam Length (Visual) ---
+                // Map length (0.5 to 2.0) to width (100px to 400px)
+                const minW = 100, maxW = 400;
+                const minL = 0.5, maxL = 2.0;
+                const visualWidth = minW + ((length - minL) * (maxW - minW)) / (maxL - minL);
+                beam.style.width = `${visualWidth}px`;
+
+                // --- Update Load Arrow (Visual) ---
+                // Map load (10 to 200) to height (10px to 40px)
+                const minH = 10, maxH = 40;
+                const minP = 10, maxP = 200;
+                const visualHeight = minH + ((load - minP) * (maxH - minH)) / (maxP - minP);
+                loadArrow.style.height = `${visualHeight}px`;
+
+                // --- Update Deflection (Visual) ---
+                // Cap deflection at a max of 20 degrees to keep it stable
+                const deflection = Math.min(data.deflectionDegrees, 20); 
+                beamAnchor.style.transform = `rotate(${deflection}deg)`;
+
+            } catch (error) {
+                console.error("Failed to fetch calculation:", error);
+                deflectionResult.textContent = "Error";
+            }
+        }
+
+        // --- Event Listeners ---
+        lengthSlider.addEventListener('input', updateSimulation);
+        loadSlider.addEventListener('input', updateSimulation);
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', updateSimulation);
+
+        // === VOICE ASSISTANT (English Only) ===
+        const narration = `Beam Deflection Experiment.
+
+This experiment shows how a cantilever beam bends when force is applied. A cantilever beam is fixed at one end and free at the other.
+
+The deflection formula is delta equals P L cubed divided by 3 E I, where P is the load, L is length, E is the material stiffness, and I is the moment of inertia.
+
+Longer beams bend much more - doubling the length increases bending by 8 times! Heavier loads also cause more bending.
+
+In this simulation, change the length and load sliders to see how the beam deflects. The red arrow shows the applied force.
+
+This principle is essential for designing safe buildings, bridges, and structures.`;
+
+        let speechSynth = window.speechSynthesis;
+        let currentUtterance = null;
+
+        function loadVoices() { return speechSynth.getVoices(); }
+        speechSynth.onvoiceschanged = loadVoices;
+        setTimeout(loadVoices, 100);
+
+        function toggleVoicePanel() { document.getElementById('voicePanel').classList.toggle('active'); }
+        
+        function playNarration() {
+            stopNarration();
+            const voices = speechSynth.getVoices();
+            currentUtterance = new SpeechSynthesisUtterance(narration);
+            
+            const femaleEn = voices.find(v => 
+                (v.name.includes('Zira') || v.name.includes('Female') || 
+                 v.name.includes('Samantha') || v.name.includes('Google')) && 
+                v.lang.startsWith('en')
+            );
+            if (femaleEn) currentUtterance.voice = femaleEn;
+            
+            currentUtterance.lang = 'en-US';
+            currentUtterance.rate = 0.9;
+            currentUtterance.pitch = 1.1;
+            
+            currentUtterance.onstart = () => { 
+                document.getElementById('voiceBtn').classList.add('speaking'); 
+                updateStatus('🔊 Speaking...'); 
+            };
+            currentUtterance.onend = () => { 
+                document.getElementById('voiceBtn').classList.remove('speaking'); 
+                updateStatus('Completed'); 
+            };
+            currentUtterance.onerror = () => { 
+                document.getElementById('voiceBtn').classList.remove('speaking'); 
+                updateStatus('Error'); 
+            };
+            
+            speechSynth.speak(currentUtterance);
+        }
+        
+        function stopNarration() {
+            speechSynth.cancel();
+            document.getElementById('voiceBtn').classList.remove('speaking');
+            updateStatus('Stopped');
+        }
+        
+        function updateStatus(text) { document.getElementById('voiceStatus').textContent = text; }
+    </script>
+
+    <style>
+        .voice-assistant-btn { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #4f46e5, #7c3aed); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); transition: all 0.3s ease; z-index: 1000; }
+        .voice-assistant-btn:hover { transform: scale(1.1); }
+        .voice-assistant-btn i { font-size: 1.8rem; color: white; }
+        .voice-assistant-btn.speaking { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); } 50% { box-shadow: 0 4px 30px rgba(79, 70, 229, 0.8); } }
+        .voice-panel { position: fixed; bottom: 100px; right: 30px; width: 280px; background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); padding: 20px; display: none; z-index: 999; }
+        .voice-panel.active { display: block; }
+        .voice-panel h3 { margin: 0 0 15px 0; color: #4f46e5; font-size: 1.1rem; }
+        .voice-controls { display: flex; gap: 10px; }
+        .voice-controls button { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .play-btn { background: #10b981; color: white; }
+        .stop-btn { background: #ef4444; color: white; }
+        .voice-status { margin-top: 15px; padding: 10px; background: #f8fafc; border-radius: 8px; font-size: 0.85rem; color: #64748b; text-align: center; }
+    </style>
+
+    <button class="voice-assistant-btn" id="voiceBtn" onclick="toggleVoicePanel()" title="Voice Assistant"><i class='bx bxs-volume-full'></i></button>
+    <div class="voice-panel" id="voicePanel">
+        <h3><i class='bx bx-volume-full'></i> Voice Explanation</h3>
+        <div class="voice-controls">
+            <button class="play-btn" onclick="playNarration()"><i class='bx bx-play'></i> Play</button>
+            <button class="stop-btn" onclick="stopNarration()"><i class='bx bx-stop'></i> Stop</button>
+        </div>
+        <div class="voice-status" id="voiceStatus">Press Play to listen</div>
+    </div>
+
+</body>
+</html>

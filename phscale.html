@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pH Scale Simulation</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <style>
+        :root {
+            --primary-color: #4a4e69; /* Muted purple */
+            --bg-color: #f7f9fc;
+            --container-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --mention-color: #4a4e69;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 20px 0;
+        }
+        .container {
+            width: 90%;
+            max-width: 700px; 
+            padding: 40px; 
+            background-color: var(--container-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07);
+            position: relative;
+        }
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 35px;
+            font-size: 1.5rem;
+        }
+        ul, ol {
+            padding-left: 25px;
+            line-height: 1.7;
+        }
+        li { margin-bottom: 10px; }
+
+        /* Voice Assistant Button */
+        .voice-assistant-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        .voice-assistant-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.5);
+        }
+        .voice-assistant-btn i {
+            font-size: 1.8rem;
+            color: white;
+        }
+        .voice-assistant-btn.speaking {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); }
+            50% { box-shadow: 0 4px 30px rgba(79, 70, 229, 0.8); }
+        }
+
+        /* Voice Panel */
+        .voice-panel {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 320px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            padding: 20px;
+            display: none;
+            z-index: 999;
+        }
+        .voice-panel.active { display: block; }
+        .voice-panel h3 {
+            margin: 0 0 15px 0;
+            color: #4f46e5;
+            font-size: 1.1rem;
+        }
+        .lang-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .lang-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .lang-btn.active {
+            border-color: #4f46e5;
+            background: #eef2ff;
+            color: #4f46e5;
+        }
+        .voice-controls {
+            display: flex;
+            gap: 10px;
+        }
+        .voice-controls button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        .play-btn { background: #10b981; color: white; }
+        .play-btn:hover { background: #059669; }
+        .stop-btn { background: #ef4444; color: white; }
+        .stop-btn:hover { background: #dc2626; }
+        .voice-status {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #64748b;
+            text-align: center;
+        }
+        
+        /* --- pH Visual --- */
+        .ph-visual {
+            width: 100%;
+            height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background-color: #f9f9f9;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .beaker {
+            width: 150px;
+            height: 200px;
+            border: 5px solid #555;
+            border-top: none;
+            border-radius: 0 0 20px 20px;
+            position: relative;
+        }
+        .beaker-lip {
+            width: 170px;
+            height: 20px;
+            border: 5px solid #555;
+            border-bottom: none;
+            border-radius: 10px 10px 0 0;
+            position: absolute;
+            top: -20px;
+            left: -10px;
+        }
+        .liquid {
+            width: 100%;
+            height: 80%;
+            background-color: #2a9d8f; /* Default: Neutral Green */
+            position: absolute;
+            bottom: 0;
+            border-radius: 0 0 15px 15px;
+            transition: background-color 0.3s ease;
+        }
+        .liquid-top {
+            width: 100%;
+            height: 10px;
+            background-color: rgba(255,255,255,0.2);
+            position: absolute;
+            top: 0;
+        }
+
+        /* Controls */
+        .controls {
+            padding: 25px;
+            background-color: #fdfdfd;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-top: 25px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .input-group span {
+            font-weight: 700;
+            color: var(--mention-color);
+            background-color: #f4f4f8;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        
+        .ph-scale-bar {
+            width: 100%;
+            height: 30px;
+            border-radius: 4px;
+            background: linear-gradient(to right, #d90429, #f77f00, #fcbf49, #2a9d8f, #007f5f, #005f73, #03045e);
+            margin-top: 5px;
+        }
+
+        /* --- UPDATED: Output --- */
+        .output {
+            text-align: center;
+            padding: 20px;
+            background-color: var(--bg-color);
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .output h3 {
+            margin: 0 0 10px 0;
+            color: var(--primary-color);
+        }
+        #classification {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+            transition: color 0.3s ease;
+        }
+        #examples { /* <-- Renamed from "description" */
+            font-size: 1.1rem;
+            margin-top: 8px;
+            color: #555;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>pH Scale Indicator</h1>
+
+        <h2>Definition</h2>
+        <p>The pH scale measures how acidic or alkaline a substance is. The scale ranges from 0 to 14, where 7 is neutral. A pH less than 7 is acidic, and a pH greater than 7 is alkaline (or basic).</p>
+
+        <h2>Virtual Apparatus</h2>
+        <ul>
+            <li>A beaker of solution with a universal indicator.</li>
+            <li>A pH meter (represented by the slider).</li>
+        </ul>
+
+        <div class="ph-visual">
+            <div class="beaker">
+                <div class="beaker-lip"></div>
+                <div id="liquid" class="liquid">
+                    <div class="liquid-top"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <h2>Controls</h2>
+            <div class="input-group">
+                <label for="phSlider">pH Value: <span id="phValue">7.0</span></label>
+                <input type="range" id="phSlider" min="0" max="14" value="7" step="0.1">
+                <div class="ph-scale-bar"></div>
+            </div>
+            
+            <div class="output">
+                <h3>Classification:</h3>
+                <span id="classification">Neutral</span>
+                <h3 style="margin-top: 15px;">Examples:</h3>
+                <p id="examples">e.g., Pure Water</p> </div>
+        </div>
+        
+        <h2>Procedure</h2>
+        <ol>
+            <li>Adjust the <strong>pH Value</strong> slider from 0 to 14.</li>
+            <li>Observe the <strong>color of the liquid</strong> in the beaker.</li>
+            <li>Note the <strong>Classification</strong> and <strong>Examples</strong> for that pH level.</li>
+        </ol>
+
+        <a href="/student_menu" style="display: block; text-align: center; margin-top: 30px; font-weight: 600; color: var(--primary-color);">Back to Main Menu</a>
+    </div>
+
+    <script>
+        // Get references to elements
+        const phSlider = document.getElementById('phSlider');
+        const phValue = document.getElementById('phValue');
+        const liquid = document.getElementById('liquid');
+        const classification = document.getElementById('classification');
+        const examples = document.getElementById('examples'); // <-- Renamed
+
+        /**
+         * Called when the slider moves.
+         */
+        async function updateSimulation() {
+            let ph = phSlider.value;
+            phValue.textContent = `${parseFloat(ph).toFixed(1)}`;
+
+            try {
+                // 2. Call the Java backend API
+                const response = await fetch(`/calculateph?ph=${ph}`);
+                if (!response.ok) throw new Error("Server error");
+                
+                const data = await response.json();
+                
+                // 3. Display the virtual output
+                classification.textContent = data.classification;
+                examples.textContent = data.examples; // <-- Renamed
+
+                // 4. Update the visual animation (the color)
+                liquid.style.backgroundColor = data.color;
+                classification.style.color = data.color;
+
+            } catch (error) {
+                console.error("Failed to fetch calculation:", error);
+                classification.textContent = "Error";
+            }
+        }
+
+        // --- Event Listeners ---
+        phSlider.addEventListener('input', updateSimulation);
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', updateSimulation);
+
+        // === VOICE ASSISTANT (English Only) ===
+        const narration = `The pH Scale Indicator Experiment.
+
+This experiment helps you understand how acidic or basic different substances are.
+
+The pH scale ranges from 0 to 14. A pH below 7 means the substance is acidic, like lemon juice or vinegar. A pH of exactly 7 is neutral, like pure water. A pH above 7 means the substance is alkaline or basic, like soap or bleach.
+
+In this simulation, you can adjust the pH slider and watch the liquid color change from red for acids to blue for bases. The experiment shows you real-world examples of substances at each pH level.
+
+This is an important concept in chemistry used in medicine, agriculture, and everyday life.`;
+
+        let speechSynth = window.speechSynthesis;
+        let currentUtterance = null;
+
+        function loadVoices() { return speechSynth.getVoices(); }
+        speechSynth.onvoiceschanged = loadVoices;
+        setTimeout(loadVoices, 100);
+
+        function toggleVoicePanel() { document.getElementById('voicePanel').classList.toggle('active'); }
+        
+        function playNarration() {
+            stopNarration();
+            const voices = speechSynth.getVoices();
+            currentUtterance = new SpeechSynthesisUtterance(narration);
+            
+            const femaleEn = voices.find(v => 
+                (v.name.includes('Zira') || v.name.includes('Female') || 
+                 v.name.includes('Samantha') || v.name.includes('Google')) && 
+                v.lang.startsWith('en')
+            );
+            if (femaleEn) currentUtterance.voice = femaleEn;
+            
+            currentUtterance.lang = 'en-US';
+            currentUtterance.rate = 0.9;
+            currentUtterance.pitch = 1.1;
+            
+            currentUtterance.onstart = () => { 
+                document.getElementById('voiceBtn').classList.add('speaking'); 
+                updateStatus('🔊 Speaking...'); 
+            };
+            currentUtterance.onend = () => { 
+                document.getElementById('voiceBtn').classList.remove('speaking'); 
+                updateStatus('Completed'); 
+            };
+            currentUtterance.onerror = () => { 
+                document.getElementById('voiceBtn').classList.remove('speaking'); 
+                updateStatus('Error'); 
+            };
+            
+            speechSynth.speak(currentUtterance);
+        }
+        
+        function stopNarration() {
+            speechSynth.cancel();
+            document.getElementById('voiceBtn').classList.remove('speaking');
+            updateStatus('Stopped');
+        }
+        
+        function updateStatus(text) { document.getElementById('voiceStatus').textContent = text; }
+    </script>
+
+    <!-- Voice Assistant Button -->
+    <button class="voice-assistant-btn" id="voiceBtn" onclick="toggleVoicePanel()" title="Voice Assistant">
+        <i class='bx bxs-volume-full'></i>
+    </button>
+
+    <!-- Voice Panel -->
+    <div class="voice-panel" id="voicePanel">
+        <h3><i class='bx bx-volume-full'></i> Voice Explanation</h3>
+        <div class="voice-controls">
+            <button class="play-btn" onclick="playNarration()"><i class='bx bx-play'></i> Play</button>
+            <button class="stop-btn" onclick="stopNarration()"><i class='bx bx-stop'></i> Stop</button>
+        </div>
+        <div class="voice-status" id="voiceStatus">Press Play to listen</div>
+    </div>
+
+</body>
+</html>

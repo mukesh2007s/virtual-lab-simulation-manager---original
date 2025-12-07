@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Gear Train Simulation</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <style>
+        :root {
+            --primary-color: #64748b; /* Grey */
+            --bg-color: #f7f9fc;
+            --container-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --mention-color: #475569;
+            --gear-color: #475569;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 20px 0;
+        }
+        .container {
+            width: 90%;
+            max-width: 900px; /* Wider for this sim */
+            padding: 40px; 
+            background-color: var(--container-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07); 
+        }
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 35px;
+            font-size: 1.5rem;
+        }
+        .formula {
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            text-align: center;
+            font-size: 1.1rem;
+            background-color: #f1f5f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+        }
+        ul, ol {
+            padding-left: 25px;
+            line-height: 1.7;
+        }
+        
+        /* --- Gear Animation --- */
+        .gear-visual {
+            width: 100%;
+            height: 350px;
+            position: relative;
+            background-color: #f9f9f9;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .gear {
+            position: absolute;
+            background: #94a3b8;
+            border-radius: 50%;
+            /* Fake teeth with a dashed border */
+            border: 15px dashed var(--gear-color); 
+            top: 50%; /* Centered vertically */
+            
+            /* Animation properties */
+            animation-iteration-count: infinite;
+            animation-timing-function: linear;
+        }
+        .gear::after { /* Center axle */
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background: #333;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        /* Animation keyframes */
+        @keyframes spin-cw {
+            from { transform: translateY(-50%) rotate(0deg); }
+            to { transform: translateY(-50%) rotate(360deg); }
+        }
+        @keyframes spin-ccw {
+            from { transform: translateY(-50%) rotate(0deg); }
+            to { transform: translateY(-50%) rotate(-360deg); }
+        }
+        
+        /* --- Controls & Output --- */
+        .simulation-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: flex-start;
+            margin-top: 25px;
+        }
+        .controls {
+            padding: 25px;
+            background-color: #fdfdfd;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+        .input-group {
+            margin-bottom: 30px;
+        }
+        .input-group label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .input-group span {
+            font-weight: 700;
+            color: var(--mention-color);
+            background-color: #f1f5f9;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        
+        .output {
+            padding: 25px;
+            background-color: var(--bg-color);
+            border-radius: 8px;
+        }
+        .output h3 {
+            margin: 0 0 10px 0;
+            color: var(--primary-color);
+        }
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            text-align: center;
+        }
+        .output-grid span {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--mention-color);
+        }
+        .output-grid p {
+            margin: 0;
+            font-weight: 600;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Simple Gear Train</h1>
+
+        <h2>Definition</h2>
+        <p>A gear train is a mechanical system formed by mounting gears on a frame so the teeth of the gears engage. This allows speed and torque to be transferred and modified.</p>
+        <div class="formula">Speed<sub>Out</sub> = Speed<sub>In</sub> &times; (Radius<sub>In</sub> / Radius<sub>Out</sub>)</div>
+
+        <div class="gear-visual">
+            <div id="gear1" class="gear" style="left: 100px;"></div>
+            <div id="gear2" class="gear"></div>
+        </div>
+
+        <div class="simulation-area">
+            <div class="controls">
+                <h2>Controls</h2>
+                <div class="input-group">
+                    <label>Gear 1 Speed (Input): <span id="speed1Value">10 RPM</span></label>
+                    <input type="range" id="speed1Slider" min="1" max="50" value="10" step="1">
+                </div>
+                <div class="input-group">
+                    <label>Gear 1 Radius (Input): <span id="r1Value">50 mm</span></label>
+                    <input type="range" id="r1Slider" min="20" max="100" value="50" step="1">
+                </div>
+                <div class="input-group">
+                    <label>Gear 2 Radius (Output): <span id="r2Value">50 mm</span></label>
+                    <input type="range" id="r2Slider" min="20" max="100" value="50" step="1">
+                </div>
+            </div>
+
+            <div class="output">
+                <h2>Results</h2>
+                <div class="output-grid">
+                    <div>
+                        <span id="speed2Output">10.00 RPM</span>
+                        <p>Gear 2 Speed</p>
+                    </div>
+                    <div>
+                        <span id="direction2Output">Opposite</span>
+                        <p>Gear 2 Direction</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <a href="/student_menu" style="display: block; text-align: center; margin-top: 30px; font-weight: 600; color: var(--primary-color);">Back to Main Menu</a>
+    </div>
+
+    <script>
+        // Get references to elements
+        const speed1Slider = document.getElementById('speed1Slider');
+        const speed1Value = document.getElementById('speed1Value');
+        const r1Slider = document.getElementById('r1Slider');
+        const r1Value = document.getElementById('r1Value');
+        const r2Slider = document.getElementById('r2Slider');
+        const r2Value = document.getElementById('r2Value');
+        
+        const speed2Output = document.getElementById('speed2Output');
+        const direction2Output = document.getElementById('direction2Output');
+        
+        const gear1 = document.getElementById('gear1');
+        const gear2 = document.getElementById('gear2');
+        
+
+        /**
+         * Called when a slider moves.
+         * Fetches calculation from Java backend and updates all UI elements.
+         */
+        async function updateSimulation() {
+            let speed1 = speed1Slider.value;
+            let r1 = r1Slider.value;
+            let r2 = r2Slider.value;
+
+            // 1. Update text labels
+            speed1Value.textContent = `${speed1} RPM`;
+            r1Value.textContent = `${r1} mm`;
+            r2Value.textContent = `${r2} mm`;
+
+            try {
+                // 2. Call the Java backend API
+                const response = await fetch(`/calculategears?speed1=${speed1}&r1=${r1}&r2=${r2}`);
+                if (!response.ok) throw new Error("Server error");
+                
+                const data = await response.json();
+                
+                // 3. Display the virtual output
+                speed2Output.textContent = `${data.speed2.toFixed(2)} RPM`;
+                direction2Output.textContent = data.direction2;
+
+                // 4. Update the visual animation
+                
+                // --- Update Gear Sizes ---
+                // We use radius as the base size. Border (teeth) is 15% of radius.
+                let size1 = parseFloat(r1);
+                let size2 = parseFloat(r2);
+                let teeth1 = Math.max(8, size1 * 0.15); // Min 8px teeth
+                let teeth2 = Math.max(8, size2 * 0.15);
+                
+                // Gear 1 (Input)
+                gear1.style.width = `${size1 * 2}px`;
+                gear1.style.height = `${size1 * 2}px`;
+                gear1.style.borderWidth = `${teeth1}px`;
+                
+                // Gear 2 (Output)
+                gear2.style.width = `${size2 * 2}px`;
+                gear2.style.height = `${size2 * 2}px`;
+                gear2.style.borderWidth = `${teeth2}px`;
+                
+                // --- Update Gear Positions ---
+                // Position Gear 2 so it "meshes" with Gear 1
+                // We set the left edge of Gear 2 to be at the center of Gear 1 + radius of Gear 1
+                // We subtract the "teeth" to make them overlap
+                let center1_x = 150; // Set a fixed center for Gear 1
+                gear1.style.left = `${center1_x - size1 - teeth1}px`; // (center - radius - border)
+                
+                let center2_x = center1_x + size1 + size2 + teeth1;
+                gear2.style.left = `${center2_x - size2 - teeth2}px`;
+                
+                
+                // --- Update Animation Speed ---
+                // duration = 60 seconds / RPM
+                let duration1 = 60 / speed1;
+                let duration2 = 60 / data.speed2;
+                
+                // Apply animations
+                gear1.style.animation = `spin-cw ${duration1}s linear infinite`;
+                
+                if (data.speed2 === 0) {
+                    gear2.style.animation = 'none'; // Don't spin if speed is 0
+                } else {
+                    gear2.style.animation = `spin-ccw ${duration2}s linear infinite`;
+                }
+
+            } catch (error) {
+                console.error("Failed to fetch calculation:", error);
+                speed2Output.textContent = "Error";
+            }
+        }
+
+        // --- Event Listeners ---
+        speed1Slider.addEventListener('input', updateSimulation);
+        r1Slider.addEventListener('input', updateSimulation);
+        r2Slider.addEventListener('input', updateSimulation);
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', updateSimulation);
+
+        // === VOICE ASSISTANT (English Only) ===
+        const narration = `Gear Train Experiment.
+
+A gear train is a mechanical system where gears mesh together to transmit motion and power. Gears are used in clocks, bicycles, cars, and machines.
+
+The speed ratio equals the number of teeth on the driver gear divided by teeth on the driven gear.
+
+When a small gear drives a large gear, output speed decreases but torque increases. When a large gear drives a small gear, output speed increases but torque decreases.
+
+Meshed gears always rotate in opposite directions.
+
+In this simulation, adjust the input speed and the number of teeth on each gear. Watch how the output speed changes based on the gear ratio.
+
+This principle is used in vehicle transmissions to control speed and is fundamental to mechanical engineering.`;
+
+        let speechSynth = window.speechSynthesis;
+        let currentUtterance = null;
+
+        function loadVoices() { return speechSynth.getVoices(); }
+        speechSynth.onvoiceschanged = loadVoices;
+        setTimeout(loadVoices, 100);
+
+        function toggleVoicePanel() { document.getElementById('voicePanel').classList.toggle('active'); }
+        
+        function playNarration() {
+            stopNarration();
+            const voices = speechSynth.getVoices();
+            currentUtterance = new SpeechSynthesisUtterance(narration);
+            
+            // Try to find a female English voice
+            const femaleEn = voices.find(v => 
+                (v.name.includes('Zira') || v.name.includes('Female') || 
+                 v.name.includes('Samantha') || v.name.includes('Google')) && 
+                v.lang.startsWith('en')
+            );
+            if (femaleEn) currentUtterance.voice = femaleEn;
+            
+            currentUtterance.lang = 'en-US';
+            currentUtterance.rate = 0.9;
+            currentUtterance.pitch = 1.1;
+            
+            currentUtterance.onstart = () => { 
+                document.getElementById('voiceBtn').classList.add('speaking'); 
+                updateVoiceStatus('🔊 Speaking...'); 
+            };
+            currentUtterance.onend = () => { 
+                document.getElementById('voiceBtn').classList.remove('speaking'); 
+                updateVoiceStatus('Completed'); 
+            };
+            currentUtterance.onerror = () => { 
+                document.getElementById('voiceBtn').classList.remove('speaking'); 
+                updateVoiceStatus('Error'); 
+            };
+            
+            speechSynth.speak(currentUtterance);
+        }
+        
+        function stopNarration() {
+            speechSynth.cancel();
+            document.getElementById('voiceBtn').classList.remove('speaking');
+            updateVoiceStatus('Stopped');
+        }
+        
+        function updateVoiceStatus(text) { document.getElementById('voiceStatus').textContent = text; }
+    </script>
+
+    <style>
+        .voice-assistant-btn { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #4f46e5, #7c3aed); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); transition: all 0.3s ease; z-index: 1000; }
+        .voice-assistant-btn:hover { transform: scale(1.1); }
+        .voice-assistant-btn i { font-size: 1.8rem; color: white; }
+        .voice-assistant-btn.speaking { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); } 50% { box-shadow: 0 4px 30px rgba(79, 70, 229, 0.8); } }
+        .voice-panel { position: fixed; bottom: 100px; right: 30px; width: 280px; background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); padding: 20px; display: none; z-index: 999; }
+        .voice-panel.active { display: block; }
+        .voice-panel h3 { margin: 0 0 15px 0; color: #4f46e5; font-size: 1.1rem; }
+        .voice-controls { display: flex; gap: 10px; }
+        .voice-controls button { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .play-btn { background: #10b981; color: white; }
+        .stop-btn { background: #ef4444; color: white; }
+        .voice-status { margin-top: 15px; padding: 10px; background: #f8fafc; border-radius: 8px; font-size: 0.85rem; color: #64748b; text-align: center; }
+    </style>
+
+    <button class="voice-assistant-btn" id="voiceBtn" onclick="toggleVoicePanel()" title="Voice Assistant"><i class='bx bxs-volume-full'></i></button>
+    <div class="voice-panel" id="voicePanel">
+        <h3><i class='bx bx-volume-full'></i> Voice Explanation</h3>
+        <div class="voice-controls">
+            <button class="play-btn" onclick="playNarration()"><i class='bx bx-play'></i> Play</button>
+            <button class="stop-btn" onclick="stopNarration()"><i class='bx bx-stop'></i> Stop</button>
+        </div>
+        <div class="voice-status" id="voiceStatus">Press Play to listen</div>
+    </div>
+
+</body>
+</html>

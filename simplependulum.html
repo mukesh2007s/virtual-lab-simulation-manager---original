@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Pendulum Simulation</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <style>
+        :root {
+            --primary-color: #006400; /* Dark Green */
+            --bg-color: #f7f9fc;
+            --container-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --mention-color: #007f00;
+            --pendulum-color: #d9534f;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 20px 0;
+        }
+        .container {
+            width: 90%;
+            max-width: 850px; 
+            padding: 40px; 
+            background-color: var(--container-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07); 
+        }
+        h1 { text-align: center; color: var(--primary-color); margin-top: 0; margin-bottom: 30px; }
+        h2 { color: var(--primary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-top: 35px; font-size: 1.5rem; }
+        .formula {
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            text-align: center;
+            font-size: 1.25rem;
+            background-color: #f0fff0;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+        }
+        ul, ol { padding-left: 25px; line-height: 1.7; }
+        li { margin-bottom: 10px; }
+        
+        .simulation-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+            margin-top: 25px;
+        }
+
+        /* --- Pendulum Animation --- */
+        .pendulum-visual {
+            width: 100%;
+            height: 300px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            border: 2px solid var(--border-color);
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .pivot {
+            width: 10px;
+            height: 10px;
+            background: #333;
+            border-radius: 50%;
+            position: absolute;
+            top: 20px;
+            z-index: 2;
+        }
+        .pendulum-arm {
+            position: absolute;
+            top: 25px;
+            width: 4px;
+            height: 150px; 
+            background: #555;
+            transform-origin: top center;
+            animation-name: swing;
+            animation-iteration-count: infinite;
+            animation-direction: alternate;
+            animation-timing-function: ease-in-out;
+        }
+        .pendulum-bob {
+            width: 40px;
+            height: 40px;
+            background: var(--pendulum-color);
+            border-radius: 50%;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translate(-50%, 50%); /* Keep center aligned */
+            transition: width 0.2s, height 0.2s;
+        }
+
+        @keyframes swing {
+            from { transform: rotate(-30deg); }
+            to   { transform: rotate(30deg); }
+        }
+
+        /* Controls */
+        .controls {
+            padding: 25px;
+            background-color: #fdfdfd;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+        .input-group { margin-bottom: 30px; }
+        .input-group label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .input-group span {
+            font-weight: 700;
+            color: var(--mention-color);
+            background-color: #f0fff0;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        
+        /* Output */
+        .output {
+            text-align: center;
+            padding: 20px;
+            background-color: var(--bg-color);
+            border-radius: 8px;
+        }
+        .output h3 { margin: 0 0 10px 0; color: var(--primary-color); }
+        #timePeriodResult { font-size: 2.5rem; font-weight: 700; color: var(--pendulum-color); }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Simple Pendulum Simulation</h1>
+
+        <h2>Definition</h2>
+        <p>A simple pendulum consists of a mass ($m$) attached to a light string of length ($L$). The time period ($T$) is determined by length and gravity ($g$). <strong>Note: Mass does not affect the time period!</strong></p>
+        <div class="formula">$T = 2\pi\sqrt{L/g}$</div>
+
+        <h2>Virtual Apparatus</h2>
+        <ul>
+            <li>Length ($L$): Adjustable string length.</li>
+            <li>Mass ($m$): Adjustable bob weight.</li>
+            <li>Gravity ($g$): Fixed at Earth standard ($9.81 m/s^2$).</li>
+        </ul>
+
+        <div class="simulation-area">
+            <div class="pendulum-visual">
+                <div class="pivot"></div>
+                <div id="pendulum-arm" class="pendulum-arm">
+                    <div id="pendulum-bob" class="pendulum-bob"></div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <h2>Controls</h2>
+                
+                <div class="input-group">
+                    <label for="lengthSlider">Length (L): <span id="lengthValue">1.5 m</span></label>
+                    <input type="range" id="lengthSlider" min="0.5" max="3.0" value="1.5" step="0.1">
+                </div>
+
+                <div class="input-group">
+                    <label for="massSlider">Mass (m): <span id="massValue">1.0 kg</span></label>
+                    <input type="range" id="massSlider" min="0.1" max="5.0" value="1.0" step="0.1">
+                </div>
+                
+                <div class="output">
+                    <h3>Time Period (T):</h3>
+                    <span id="timePeriodResult">-- s</span>
+                </div>
+            </div>
+        </div>
+        
+        <h2>Procedure</h2>
+        <ol>
+            <li>Adjust the <strong>Length (L)</strong>. Notice the time period changes.</li>
+            <li>Adjust the <strong>Mass (m)</strong>. Notice the bob size changes, but the time period stays the same! This proves mass does not affect the swing time.</li>
+        </ol>
+
+    <div style="text-align: center; margin-top: 3rem;">
+    <a href="/student_menu" class="btn secondary" style="width: auto;">
+        <i class='bx bx-arrow-back'></i> Back to Experiment Library
+    </a>
+    </div>    </div>
+
+    <script>
+        const lengthSlider = document.getElementById('lengthSlider');
+        const lengthValue = document.getElementById('lengthValue');
+        const massSlider = document.getElementById('massSlider');
+        const massValue = document.getElementById('massValue');
+        const timePeriodResult = document.getElementById('timePeriodResult');
+        const pendulumArm = document.getElementById('pendulum-arm');
+        const pendulumBob = document.getElementById('pendulum-bob');
+
+        async function updateSimulation() {
+            let length = lengthSlider.value;
+            let mass = massSlider.value;
+
+            // 1. Update labels
+            lengthValue.textContent = `${parseFloat(length).toFixed(1)} m`;
+            massValue.textContent = `${parseFloat(mass).toFixed(1)} kg`;
+
+            try {
+                // 2. Call Backend (Sending mass now, instead of gravity)
+                const response = await fetch(`/calculatependulum?length=${length}&mass=${mass}`);
+                if (!response.ok) throw new Error("Server error");
+                
+                const data = await response.json();
+                
+                // 3. Display Result
+                timePeriodResult.textContent = `${data.timePeriod.toFixed(3)} s`;
+
+                // 4. Visual Updates
+                
+                // Scale Arm Length
+                const minH = 100, maxH = 250;
+                const minL = 0.5, maxL = 3.0;
+                const visualHeight = minH + ((length - minL) * (maxH - minH)) / (maxL - minL);
+                pendulumArm.style.height = `${visualHeight}px`;
+
+                // Scale Bob Size based on Mass (NEW)
+                const minSize = 20, maxSize = 60;
+                const minM = 0.1, maxM = 5.0;
+                const bobSize = minSize + ((mass - minM) * (maxSize - minSize)) / (maxM - minM);
+                
+                pendulumBob.style.width = `${bobSize}px`;
+                pendulumBob.style.height = `${bobSize}px`;
+
+                // Update swing speed
+                const halfPeriod = data.timePeriod / 2.0;
+                pendulumArm.style.animationDuration = `${halfPeriod}s`;
+
+            } catch (error) {
+                console.error("Fetch error:", error);
+                timePeriodResult.textContent = "Error";
+            }
+        }
+
+        lengthSlider.addEventListener('input', updateSimulation);
+        massSlider.addEventListener('input', updateSimulation);
+        document.addEventListener('DOMContentLoaded', updateSimulation);
+
+        // === VOICE ASSISTANT (English Only) ===
+        const narration = `The Simple Pendulum Experiment.
+
+This experiment demonstrates how a pendulum swings back and forth. A pendulum is a weight hanging from a string.
+
+The key discovery is that the time for one complete swing depends only on the length of the string, not on the weight. A longer string makes the pendulum swing slower.
+
+The formula is T equals 2 pi times the square root of length divided by gravity.
+
+In this simulation, you can change the string length and the weight. Notice that changing the weight does not change the swing time. This is an important principle in physics.
+
+Pendulums are used in clocks and scientific instruments.`;
+
+        let speechSynth = window.speechSynthesis;
+        let currentUtterance = null;
+
+        function loadVoices() { return speechSynth.getVoices(); }
+        speechSynth.onvoiceschanged = loadVoices;
+        setTimeout(loadVoices, 100);
+
+        function toggleVoicePanel() { document.getElementById('voicePanel').classList.toggle('active'); }
+        
+        function playNarration() {
+            stopNarration();
+            const voices = speechSynth.getVoices();
+            currentUtterance = new SpeechSynthesisUtterance(narration);
+            
+            const femaleEn = voices.find(v => 
+                (v.name.includes('Zira') || v.name.includes('Female') || 
+                 v.name.includes('Samantha') || v.name.includes('Google')) && 
+                v.lang.startsWith('en')
+            );
+            if (femaleEn) currentUtterance.voice = femaleEn;
+            
+            currentUtterance.lang = 'en-US';
+            currentUtterance.rate = 0.9;
+            currentUtterance.pitch = 1.1;
+            
+            currentUtterance.onstart = () => { 
+                document.getElementById('voiceBtn').classList.add('speaking'); 
+                updateStatus('🔊 Speaking...'); 
+            };
+            currentUtterance.onend = () => { 
+                document.getElementById('voiceBtn').classList.remove('speaking'); 
+                updateStatus('Completed'); 
+            };
+            currentUtterance.onerror = () => { 
+                document.getElementById('voiceBtn').classList.remove('speaking'); 
+                updateStatus('Error'); 
+            };
+            
+            speechSynth.speak(currentUtterance);
+        }
+        
+        function stopNarration() {
+            speechSynth.cancel();
+            document.getElementById('voiceBtn').classList.remove('speaking');
+            updateStatus('Stopped');
+        }
+        
+        function updateStatus(text) { document.getElementById('voiceStatus').textContent = text; }
+    </script>
+
+    <style>
+        .voice-assistant-btn { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #4f46e5, #7c3aed); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); transition: all 0.3s ease; z-index: 1000; }
+        .voice-assistant-btn:hover { transform: scale(1.1); }
+        .voice-assistant-btn i { font-size: 1.8rem; color: white; }
+        .voice-assistant-btn.speaking { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); } 50% { box-shadow: 0 4px 30px rgba(79, 70, 229, 0.8); } }
+        .voice-panel { position: fixed; bottom: 100px; right: 30px; width: 280px; background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); padding: 20px; display: none; z-index: 999; }
+        .voice-panel.active { display: block; }
+        .voice-panel h3 { margin: 0 0 15px 0; color: #4f46e5; font-size: 1.1rem; }
+        .voice-controls { display: flex; gap: 10px; }
+        .voice-controls button { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .play-btn { background: #10b981; color: white; }
+        .stop-btn { background: #ef4444; color: white; }
+        .voice-status { margin-top: 15px; padding: 10px; background: #f8fafc; border-radius: 8px; font-size: 0.85rem; color: #64748b; text-align: center; }
+    </style>
+
+    <button class="voice-assistant-btn" id="voiceBtn" onclick="toggleVoicePanel()" title="Voice Assistant"><i class='bx bxs-volume-full'></i></button>
+    <div class="voice-panel" id="voicePanel">
+        <h3><i class='bx bx-volume-full'></i> Voice Explanation</h3>
+        <div class="voice-controls">
+            <button class="play-btn" onclick="playNarration()"><i class='bx bx-play'></i> Play</button>
+            <button class="stop-btn" onclick="stopNarration()"><i class='bx bx-stop'></i> Stop</button>
+        </div>
+        <div class="voice-status" id="voiceStatus">Press Play to listen</div>
+    </div>
+
+</body>
+</html>

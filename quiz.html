@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz Library</title>
+    <link rel="stylesheet" href="/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="brand"><i class='bx bx-atom'></i> Virtual Lab</div>
+        <ul class="nav-menu" id="nav-menu">
+            <!-- Dynamic sidebar loaded by JS -->
+        </ul>
+        <div class="user-profile">
+            <a href="/logout" class="logout-btn"><i class='bx bx-log-out'></i> Sign Out</a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        
+        <div id="topic-view">
+            <div class="page-header">
+                <h1 class="page-title">Quiz Library</h1>
+                <p class="page-subtitle">Select a topic to begin your assessment.</p>
+            </div>
+
+            <div class="grid">
+                <div class="experiment-card" style="--card-color: #8b5cf6;"> 
+                    <div class="card-header"><span class="tag physics" style="background:#f3e8ff; color:#7e22ce;">Physics</span></div>
+                    <div class="card-body">
+                        <h3>Physics Quiz</h3>
+                        <p>Test your knowledge of Ohm's Law and mechanics.</p>
+                    </div>
+                    <div style="padding: 1.5rem;"><button onclick="startQuiz('physics')" class="btn">Start Quiz</button></div>
+                </div>
+                <div class="experiment-card" style="--card-color: #10b981;"> 
+                    <div class="card-header"><span class="tag chemistry">Chemistry</span></div>
+                    <div class="card-body">
+                        <h3>Chemistry Quiz</h3>
+                        <p>Questions on pH, states of matter, and elements.</p>
+                    </div>
+                    <div style="padding: 1.5rem;"><button onclick="startQuiz('chemistry')" class="btn">Start Quiz</button></div>
+                </div>
+                <div class="experiment-card" style="--card-color: #ef4444;"> 
+                    <div class="card-header"><span class="tag engineering">Engineering</span></div>
+                    <div class="card-body">
+                        <h3>Engineering Quiz</h3>
+                        <p>Gear trains, beam deflection, and structures.</p>
+                    </div>
+                    <div style="padding: 1.5rem;"><button onclick="startQuiz('engineering')" class="btn">Start Quiz</button></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="quiz-view" class="hidden quiz-wrapper">
+            <div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <button onclick="location.reload()" class="btn secondary" style="padding: 6px 12px; font-size:0.8rem; margin-bottom:10px;">&larr; Exit</button>
+                    <h1 class="page-title" id="quiz-title">Physics Quiz</h1>
+                </div>
+                <div style="text-align:right;">
+                    <span style="font-weight:600; color:var(--text-muted);">Question 1-5</span>
+                </div>
+            </div>
+            
+            <form id="quiz-form"></form>
+            
+            <button id="submit-btn" class="btn" style="margin-top: 20px; padding: 15px;">Submit Answers</button>
+            
+            <div id="result-footer" class="hidden" style="margin-top: 30px; text-align: center; padding: 20px; background: white; border-radius: 12px; box-shadow: var(--shadow-lg);">
+                <h2 id="score-text">You scored 4/5</h2>
+                <div style="display:flex; gap:10px; justify-content:center; margin-top:15px;">
+                    <button onclick="location.reload()" class="btn">Take Another Quiz</button>
+                    <a href="/dashboard" class="btn secondary">View Progress</a>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const topicView = document.getElementById('topic-view');
+        const quizView = document.getElementById('quiz-view');
+        const quizForm = document.getElementById('quiz-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const resultFooter = document.getElementById('result-footer');
+        let currentQuestions = [];
+
+        async function startQuiz(topic) {
+            // UI Switch
+            topicView.classList.add('hidden');
+            quizView.classList.remove('hidden');
+            document.getElementById('quiz-title').innerText = topic.charAt(0).toUpperCase() + topic.slice(1) + " Quiz";
+
+            // Fetch Questions
+            const res = await fetch(`/getquiz?topic=${topic}`);
+            currentQuestions = await res.json();
+            
+            // Render Questions
+            quizForm.innerHTML = '';
+            currentQuestions.forEach((q, i) => {
+                let html = `
+                <div class="question-card" id="card-${i}">
+                    <div class="question-text">${i + 1}. ${q.question}</div>
+                    <div class="options-group">`;
+                
+                q.options.forEach((opt, j) => {
+                    html += `
+                    <label class="option-label" id="label-${i}-${j}">
+                        <input type="radio" name="q-${i}" value="${j}">
+                        ${opt}
+                    </label>`;
+                });
+
+                // Explanation Box (Hidden initially)
+                html += `
+                    </div>
+                    <div class="explanation-box" id="explain-${i}">
+                        <span class="explanation-title"><i class='bx bx-bulb'></i> Explanation</span>
+                        ${q.explanation}
+                    </div>
+                </div>`;
+                
+                quizForm.innerHTML += html;
+            });
+        }
+
+        submitBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            let score = 0;
+            let formData = "";
+
+            // Grade the Quiz in the Browser (Immediate Feedback)
+            currentQuestions.forEach((q, i) => {
+                const selected = document.querySelector(`input[name="q-${i}"]:checked`);
+                const explanationBox = document.getElementById(`explain-${i}`);
+                const card = document.getElementById(`card-${i}`);
+                
+                // Prepare data for server saving
+                if(selected) formData += `question-${i}=${selected.value}&`;
+
+                // Disable inputs
+                const inputs = document.querySelectorAll(`input[name="q-${i}"]`);
+                inputs.forEach(inp => inp.disabled = true);
+
+                // Show Explanation
+                explanationBox.style.display = 'block';
+
+                // Check Answer
+                if (selected && parseInt(selected.value) === q.correctIndex) {
+                    // Correct!
+                    score++;
+                    document.getElementById(`label-${i}-${selected.value}`).classList.add('correct-answer');
+                } else {
+                    // Wrong!
+                    if (selected) {
+                        document.getElementById(`label-${i}-${selected.value}`).classList.add('wrong-answer');
+                    }
+                    // Highlight the correct one
+                    document.getElementById(`label-${i}-${q.correctIndex}`).classList.add('correct-answer');
+                }
+            });
+
+            // Save Score to Server
+            await fetch('/submitquiz', { method: 'POST', body: formData });
+
+            // Show Results
+            submitBtn.classList.add('hidden');
+            resultFooter.classList.remove('hidden');
+            document.getElementById('score-text').innerText = `You scored ${score} / ${currentQuestions.length}`;
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        });
+
+        // Load sidebar based on role
+        function loadSidebar() {
+            fetch('/getprofile')
+                .then(res => res.json())
+                .then(data => {
+                    const navMenu = document.getElementById('nav-menu');
+                    let menuHTML = '';
+                    
+                    if (data.role === 'TEACHER') {
+                        menuHTML = `
+                            <li class="nav-item"><a href="/teacher_menu" class="nav-link"><i class='bx bx-grid-alt'></i> Dashboard</a></li>
+                            <li class="nav-item"><a href="/lectures" class="nav-link"><i class='bx bx-video'></i> Lectures</a></li>
+                            <li class="nav-item"><a href="/materials" class="nav-link"><i class='bx bx-book-open'></i> Materials</a></li>
+                            <li class="nav-item"><a href="/quiz" class="nav-link active"><i class='bx bx-brain'></i> Quizzes</a></li>
+                            <li class="nav-item"><a href="/tests" class="nav-link"><i class='bx bx-edit-alt'></i> Tests</a></li>
+                            <li class="nav-item"><a href="/feedback" class="nav-link"><i class='bx bx-message-square-dots'></i> Feedback</a></li>
+                            <li class="nav-item"><a href="/profile" class="nav-link"><i class='bx bx-user-circle'></i> My Profile</a></li>
+                        `;
+                    } else {
+                        menuHTML = `
+                            <li class="nav-item"><a href="/student_menu" class="nav-link"><i class='bx bx-grid-alt'></i> Dashboard</a></li>
+                            <li class="nav-item"><a href="/lectures" class="nav-link"><i class='bx bx-video'></i> Lectures</a></li>
+                            <li class="nav-item"><a href="/materials" class="nav-link"><i class='bx bx-book-open'></i> Materials</a></li>
+                            <li class="nav-item"><a href="/quiz" class="nav-link active"><i class='bx bx-brain'></i> Quizzes</a></li>
+                            <li class="nav-item"><a href="/tests" class="nav-link"><i class='bx bx-edit-alt'></i> Tests</a></li>
+                            <li class="nav-item"><a href="/dashboard" class="nav-link"><i class='bx bx-bar-chart-alt-2'></i> Performance</a></li>
+                            <li class="nav-item"><a href="/feedback" class="nav-link"><i class='bx bx-message-square-dots'></i> Feedback</a></li>
+                            <li class="nav-item"><a href="/profile" class="nav-link"><i class='bx bx-user-circle'></i> My Profile</a></li>
+                        `;
+                    }
+                    navMenu.innerHTML = menuHTML;
+                });
+        }
+        loadSidebar();
+    </script>
+
+</body>
+</html>

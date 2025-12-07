@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Online Test - Virtual Lab</title>
+    <link rel="stylesheet" href="/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+        }
+        .main-section {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .sidebar-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .timer-card {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            text-align: center;
+        }
+        .timer-display {
+            font-size: 3rem;
+            font-weight: 800;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        .timer-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        .camera-card {
+            text-align: center;
+        }
+        .camera-preview {
+            width: 100%;
+            border-radius: 12px;
+            background: #1a1a2e;
+            aspect-ratio: 4/3;
+        }
+        .camera-status {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #10b981;
+            font-weight: 600;
+        }
+        .camera-status.error {
+            color: #ef4444;
+        }
+        .recording-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        .recording-dot {
+            width: 10px;
+            height: 10px;
+            background: #dc2626;
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        .test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+        .test-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .question-counter {
+            background: #e0e7ff;
+            color: #4338ca;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        .question-box {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        .question-number {
+            color: #6366f1;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        .question-text {
+            font-size: 1.15rem;
+            color: #1e293b;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .option-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .option-item:hover {
+            border-color: #6366f1;
+            background: #f0f0ff;
+        }
+        .option-item.selected {
+            border-color: #6366f1;
+            background: #e0e7ff;
+        }
+        .option-item input[type="radio"] {
+            display: none;
+        }
+        .option-letter {
+            width: 32px;
+            height: 32px;
+            background: #e2e8f0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #64748b;
+            margin-right: 15px;
+            transition: all 0.2s;
+        }
+        .option-item.selected .option-letter {
+            background: #6366f1;
+            color: white;
+        }
+        .option-text {
+            flex: 1;
+            font-size: 1rem;
+            color: #334155;
+        }
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px solid #f1f5f9;
+        }
+        .nav-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-btn.prev {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+        .nav-btn.prev:hover {
+            background: #e2e8f0;
+        }
+        .nav-btn.next {
+            background: #6366f1;
+            color: white;
+        }
+        .nav-btn.next:hover {
+            background: #4f46e5;
+        }
+        .nav-btn.submit {
+            background: #10b981;
+            color: white;
+        }
+        .nav-btn.submit:hover {
+            background: #059669;
+        }
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .question-nav {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .q-dot {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid #e2e8f0;
+            background: white;
+            color: #64748b;
+        }
+        .q-dot.answered {
+            background: #10b981;
+            border-color: #10b981;
+            color: white;
+        }
+        .q-dot.current {
+            border-color: #6366f1;
+            background: #e0e7ff;
+            color: #4338ca;
+        }
+        .q-dot:hover {
+            border-color: #6366f1;
+        }
+        /* Setup Screen */
+        .setup-screen {
+            max-width: 600px;
+            margin: 50px auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .setup-screen h1 {
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        .setup-screen p {
+            color: #64748b;
+            margin-bottom: 30px;
+        }
+        .setup-camera {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 12px;
+            margin: 20px auto;
+            background: #1a1a2e;
+        }
+        .setup-instructions {
+            text-align: left;
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        .setup-instructions li {
+            color: #475569;
+            margin: 10px 0;
+            padding-left: 10px;
+        }
+        .start-btn {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .start-btn:hover {
+            transform: scale(1.02);
+        }
+        .start-btn:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+        }
+        /* Results Screen */
+        .results-screen {
+            max-width: 500px;
+            margin: 50px auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .results-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+        }
+        .results-score {
+            font-size: 4rem;
+            font-weight: 800;
+            color: #1e293b;
+        }
+        .results-details {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+        .home-btn {
+            margin-top: 30px;
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .home-btn:hover {
+            background: #4f46e5;
+        }
+        .hidden { display: none !important; }
+        
+        /* Warning Message */
+        .warning-banner {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            color: #92400e;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Setup Screen -->
+    <div id="setupScreen" class="setup-screen">
+        <h1><i class='bx bx-edit-alt' style="color:#6366f1;"></i> Online Test</h1>
+        <p id="testInfo">Preparing your test...</p>
+        
+        <video id="setupCamera" class="setup-camera" autoplay muted playsinline></video>
+        <p id="cameraSetupStatus" class="camera-status">Requesting camera access...</p>
+        
+        <div class="setup-instructions">
+            <h3 style="margin-bottom:10px; color:#1e293b;"><i class='bx bx-info-circle'></i> Test Instructions</h3>
+            <ul>
+                <li><strong>Camera Required:</strong> Your video will be recorded as proof</li>
+                <li><strong>Time Limit:</strong> Test will auto-submit when time expires</li>
+                <li><strong>Single Attempt:</strong> You can only take this test once</li>
+                <li><strong>No Leaving:</strong> Stay on this tab during the entire test</li>
+                <li><strong>Answer All:</strong> Try to answer all questions</li>
+            </ul>
+        </div>
+        
+        <button id="startTestBtn" class="start-btn" disabled onclick="startTest()">
+            <i class='bx bx-play'></i> Start Test
+        </button>
+    </div>
+
+    <!-- Test Screen -->
+    <div id="testScreen" class="test-container hidden">
+        <div class="main-section">
+            <div class="test-header">
+                <div class="test-title" id="testTitle">Loading Test...</div>
+                <div class="question-counter">
+                    Question <span id="currentQ">1</span> of <span id="totalQ">10</span>
+                </div>
+            </div>
+
+            <div class="warning-banner" id="warningBanner" style="display:none;">
+                <i class='bx bx-error'></i>
+                <span id="warningText">Warning message here</span>
+            </div>
+
+            <div class="question-box">
+                <div class="question-number" id="questionNumber">Question 1</div>
+                <div class="question-text" id="questionText">Loading question...</div>
+            </div>
+
+            <div class="options-list" id="optionsList">
+                <!-- Options will be loaded here -->
+            </div>
+
+            <div class="navigation-buttons">
+                <button class="nav-btn prev" id="prevBtn" onclick="prevQuestion()">
+                    <i class='bx bx-chevron-left'></i> Previous
+                </button>
+                <button class="nav-btn next" id="nextBtn" onclick="nextQuestion()">
+                    Next <i class='bx bx-chevron-right'></i>
+                </button>
+                <button class="nav-btn submit hidden" id="submitBtn" onclick="submitTest()">
+                    <i class='bx bx-check'></i> Submit Test
+                </button>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="card timer-card">
+                <div class="timer-label"><i class='bx bx-time-five'></i> Time Remaining</div>
+                <div class="timer-display" id="timerDisplay">00:00</div>
+            </div>
+
+            <div class="card camera-card">
+                <video id="cameraPreview" class="camera-preview" autoplay muted playsinline></video>
+                <div class="camera-status" id="cameraStatus">Camera Active</div>
+                <div class="recording-indicator">
+                    <div class="recording-dot"></div>
+                    Recording
+                </div>
+            </div>
+
+            <div class="card">
+                <h4 style="margin-bottom:10px; color:#1e293b;"><i class='bx bx-grid-alt'></i> Questions</h4>
+                <div class="question-nav" id="questionNav">
+                    <!-- Question dots will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="resultsScreen" class="results-screen hidden">
+        <div class="results-icon" id="resultsIcon">🎉</div>
+        <h2 style="color:#1e293b; margin-bottom:10px;">Test Completed!</h2>
+        <div class="results-score" id="resultsScore">0/10</div>
+        <p style="color:#64748b; margin-top:10px;">Your score has been recorded</p>
+        
+        <div class="results-details">
+            <p><strong>Correct Answers:</strong> <span id="correctCount">0</span></p>
+            <p><strong>Incorrect Answers:</strong> <span id="incorrectCount">0</span></p>
+            <p><strong>Time Taken:</strong> <span id="timeTaken">0 minutes</span></p>
+        </div>
+        
+        <p style="color:#64748b; margin-top:20px; font-size:0.9rem;">
+            <i class='bx bx-video'></i> Your video proof has been submitted to your teacher
+        </p>
+        
+        <button class="home-btn" onclick="window.location.href='/student_menu'">
+            <i class='bx bx-home'></i> Back to Dashboard
+        </button>
+    </div>
+
+    <script>
+        // Global variables
+        let testId = null;
+        let resultId = null;
+        let questions = [];
+        let answers = {};
+        let currentQuestion = 0;
+        let timeRemaining = 0;
+        let timerInterval = null;
+        let testStartTime = null;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let stream = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Get test ID from URL (support both 'testId' and 'id' params)
+            const urlParams = new URLSearchParams(window.location.search);
+            testId = urlParams.get('testId') || urlParams.get('id');
+            
+            if (!testId) {
+                alert('No test specified!');
+                window.location.href = '/tests';
+                return;
+            }
+
+            // Check if already taken
+            try {
+                const checkRes = await fetch(`/api/test/check_taken?testId=${testId}`);
+                const checkData = await checkRes.json();
+                if (checkData.taken) {
+                    alert('You have already taken this test!');
+                    window.location.href = '/tests';
+                    return;
+                }
+            } catch (e) {
+                console.error('Error checking test status:', e);
+            }
+
+            // Load test info
+            await loadTestInfo();
+            
+            // Setup camera
+            await setupCamera();
+        });
+
+        async function loadTestInfo() {
+            try {
+                const res = await fetch('/api/test/active_tests');
+                const tests = await res.json();
+                const test = tests.find(t => t.id == testId);
+                
+                if (!test) {
+                    alert('Test not available!');
+                    window.location.href = '/student';
+                    return;
+                }
+
+                document.getElementById('testInfo').innerHTML = `
+                    <strong>${test.title}</strong><br>
+                    Duration: ${test.duration} minutes | Questions: ${test.numQuestions}
+                `;
+                timeRemaining = test.duration * 60;
+            } catch (e) {
+                console.error('Error loading test info:', e);
+            }
+        }
+
+        async function setupCamera() {
+            const statusEl = document.getElementById('cameraSetupStatus');
+            const startBtn = document.getElementById('startTestBtn');
+            
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user', width: 640, height: 480 }, 
+                    audio: true 
+                });
+                
+                document.getElementById('setupCamera').srcObject = stream;
+                document.getElementById('cameraPreview').srcObject = stream;
+                
+                statusEl.textContent = '✓ Camera ready';
+                statusEl.classList.remove('error');
+                startBtn.disabled = false;
+                
+                // Setup MediaRecorder
+                const options = { mimeType: 'video/webm;codecs=vp9,opus' };
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    options.mimeType = 'video/webm';
+                }
+                mediaRecorder = new MediaRecorder(stream, options);
+                
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) {
+                        recordedChunks.push(e.data);
+                    }
+                };
+                
+            } catch (err) {
+                console.error('Camera error:', err);
+                statusEl.textContent = '✗ Camera access denied. Please enable camera.';
+                statusEl.classList.add('error');
+                startBtn.disabled = true;
+            }
+        }
+
+        async function startTest() {
+            // Start recording
+            if (mediaRecorder) {
+                recordedChunks = [];
+                mediaRecorder.start(1000); // Collect data every second
+            }
+            
+            testStartTime = new Date();
+            
+            // Get questions from server
+            try {
+                const startRes = await fetch(`/api/test/start?testId=${testId}`);
+                const startData = await startRes.json();
+                
+                if (!startData.success) {
+                    alert(startData.error || 'Failed to start test');
+                    return;
+                }
+                
+                resultId = startData.resultId;
+                
+                const qRes = await fetch(`/api/test/get_questions?testId=${testId}`);
+                questions = await qRes.json();
+                
+                if (questions.length === 0) {
+                    alert('No questions available for this test!');
+                    return;
+                }
+                
+                // Initialize answers
+                questions.forEach((q, i) => answers[i] = null);
+                
+                // Update UI
+                document.getElementById('totalQ').textContent = questions.length;
+                buildQuestionNav();
+                showQuestion(0);
+                
+                // Switch screens
+                document.getElementById('setupScreen').classList.add('hidden');
+                document.getElementById('testScreen').classList.remove('hidden');
+                
+                // Start timer
+                startTimer();
+                
+            } catch (e) {
+                console.error('Error starting test:', e);
+                alert('Failed to start test. Please try again.');
+            }
+        }
+
+        function startTimer() {
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+                
+                if (timeRemaining <= 60) {
+                    document.querySelector('.timer-card').style.animation = 'blink 1s infinite';
+                }
+                
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    alert('Time is up! Your test will be submitted.');
+                    submitTest();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timeRemaining / 60);
+            const secs = timeRemaining % 60;
+            document.getElementById('timerDisplay').textContent = 
+                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function buildQuestionNav() {
+            const nav = document.getElementById('questionNav');
+            nav.innerHTML = '';
+            questions.forEach((q, i) => {
+                const dot = document.createElement('div');
+                dot.className = 'q-dot' + (i === 0 ? ' current' : '');
+                dot.textContent = i + 1;
+                dot.onclick = () => showQuestion(i);
+                nav.appendChild(dot);
+            });
+        }
+
+        function updateQuestionNav() {
+            const dots = document.querySelectorAll('.q-dot');
+            dots.forEach((dot, i) => {
+                dot.classList.remove('current');
+                if (i === currentQuestion) dot.classList.add('current');
+                if (answers[i] !== null) dot.classList.add('answered');
+            });
+        }
+
+        function showQuestion(index) {
+            currentQuestion = index;
+            const q = questions[index];
+            
+            document.getElementById('currentQ').textContent = index + 1;
+            document.getElementById('questionNumber').textContent = `Question ${index + 1}`;
+            document.getElementById('questionText').textContent = q.question;
+            
+            // Build options
+            const optionsHtml = q.options.map((opt, i) => {
+                const letters = ['A', 'B', 'C', 'D'];
+                const selected = answers[index] === i ? 'selected' : '';
+                return `
+                    <label class="option-item ${selected}" onclick="selectOption(${i})">
+                        <input type="radio" name="answer" value="${i}" ${selected ? 'checked' : ''}>
+                        <div class="option-letter">${letters[i]}</div>
+                        <div class="option-text">${opt}</div>
+                    </label>
+                `;
+            }).join('');
+            document.getElementById('optionsList').innerHTML = optionsHtml;
+            
+            // Update navigation buttons
+            document.getElementById('prevBtn').disabled = index === 0;
+            
+            if (index === questions.length - 1) {
+                document.getElementById('nextBtn').classList.add('hidden');
+                document.getElementById('submitBtn').classList.remove('hidden');
+            } else {
+                document.getElementById('nextBtn').classList.remove('hidden');
+                document.getElementById('submitBtn').classList.add('hidden');
+            }
+            
+            updateQuestionNav();
+        }
+
+        function selectOption(optionIndex) {
+            answers[currentQuestion] = optionIndex;
+            
+            // Update UI
+            document.querySelectorAll('.option-item').forEach((item, i) => {
+                item.classList.toggle('selected', i === optionIndex);
+            });
+            
+            updateQuestionNav();
+        }
+
+        function prevQuestion() {
+            if (currentQuestion > 0) {
+                showQuestion(currentQuestion - 1);
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < questions.length - 1) {
+                showQuestion(currentQuestion + 1);
+            }
+        }
+
+        async function submitTest() {
+            if (!confirm('Are you sure you want to submit the test?')) return;
+            
+            clearInterval(timerInterval);
+            
+            // Stop recording
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            
+            // Wait a moment for final recording data
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Calculate score
+            let correct = 0;
+            questions.forEach((q, i) => {
+                if (answers[i] === q.correctIndex) correct++;
+            });
+            
+            // Calculate time taken
+            const endTime = new Date();
+            const timeTakenMs = endTime - testStartTime;
+            const timeTakenMins = Math.round(timeTakenMs / 60000);
+            
+            // Upload video
+            let videoPath = '';
+            if (recordedChunks.length > 0) {
+                const videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
+                const formData = new FormData();
+                formData.append('video', videoBlob, `test_${testId}_${Date.now()}.webm`);
+                formData.append('resultId', resultId);
+                
+                try {
+                    const uploadRes = await fetch('/api/test/upload_video', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const uploadData = await uploadRes.json();
+                    if (uploadData.success) {
+                        videoPath = uploadData.videoPath;
+                    }
+                } catch (e) {
+                    console.error('Error uploading video:', e);
+                }
+            }
+            
+            // Submit results
+            try {
+                const submitRes = await fetch('/api/test/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        resultId: resultId,
+                        score: correct,
+                        totalQuestions: questions.length,
+                        answers: answers,
+                        videoPath: videoPath,
+                        timeTaken: `${timeTakenMins} min`
+                    })
+                });
+                
+                const submitData = await submitRes.json();
+                
+                // Show results
+                showResults(correct, questions.length, timeTakenMins);
+                
+            } catch (e) {
+                console.error('Error submitting test:', e);
+                alert('Error submitting test. Your answers may not have been saved.');
+            }
+            
+            // Stop camera
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        function showResults(correct, total, timeTaken) {
+            document.getElementById('testScreen').classList.add('hidden');
+            document.getElementById('resultsScreen').classList.remove('hidden');
+            
+            const percentage = Math.round((correct / total) * 100);
+            
+            document.getElementById('resultsScore').textContent = `${correct}/${total}`;
+            document.getElementById('correctCount').textContent = correct;
+            document.getElementById('incorrectCount').textContent = total - correct;
+            document.getElementById('timeTaken').textContent = `${timeTaken} minutes`;
+            
+            // Set icon based on score
+            const icon = document.getElementById('resultsIcon');
+            if (percentage >= 70) {
+                icon.textContent = '🎉';
+            } else if (percentage >= 50) {
+                icon.textContent = '👍';
+            } else {
+                icon.textContent = '📚';
+            }
+        }
+
+        // Prevent leaving the page
+        window.addEventListener('beforeunload', (e) => {
+            if (timerInterval) {
+                e.preventDefault();
+                e.returnValue = 'You have an active test. Are you sure you want to leave?';
+            }
+        });
+
+        // Detect tab visibility changes
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && timerInterval) {
+                const banner = document.getElementById('warningBanner');
+                const text = document.getElementById('warningText');
+                text.textContent = 'Warning: You left the test tab! This has been recorded.';
+                banner.style.display = 'flex';
+            }
+        });
+    </script>
+</body>
+</html>

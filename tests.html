@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tests - Virtual Lab</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .tests-page {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        /* Empty State - No Tests */
+        .no-tests-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            text-align: center;
+            padding: 2rem;
+        }
+        .no-tests-illustration {
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        .no-tests-illustration::before {
+            content: '';
+            position: absolute;
+            width: 230px;
+            height: 230px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 50%;
+            animation: spin 20s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .no-tests-illustration i {
+            font-size: 5rem;
+            color: #6366f1;
+        }
+        .no-tests-container h2 {
+            font-size: 1.75rem;
+            color: var(--text-dark);
+            margin: 0 0 0.75rem;
+        }
+        .no-tests-container > p {
+            color: #64748b;
+            font-size: 1.1rem;
+            margin: 0 0 2rem;
+            max-width: 400px;
+        }
+        .suggestions-box {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            text-align: left;
+            width: 100%;
+            max-width: 400px;
+        }
+        .suggestions-box h4 {
+            color: var(--primary);
+            margin: 0 0 1rem;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .suggestion-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.75rem;
+            border-radius: 10px;
+            color: #475569;
+            text-decoration: none;
+            transition: all 0.2s;
+            margin-bottom: 0.5rem;
+        }
+        .suggestion-item:hover {
+            background: #f1f5f9;
+            color: var(--primary);
+        }
+        .suggestion-item i {
+            font-size: 1.25rem;
+            color: #6366f1;
+        }
+        
+        /* Section Headers */
+        .section {
+            margin-bottom: 2rem;
+        }
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid;
+        }
+        .section-title i {
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 1.25rem;
+        }
+        .section-title .count {
+            margin-left: auto;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        /* Active Section */
+        .section.active .section-title { border-color: #16a34a; }
+        .section.active .section-title i { background: #dcfce7; color: #16a34a; }
+        .section.active .count { background: #dcfce7; color: #16a34a; }
+        
+        /* Upcoming Section */
+        .section.upcoming .section-title { border-color: #f59e0b; }
+        .section.upcoming .section-title i { background: #fef3c7; color: #f59e0b; }
+        .section.upcoming .count { background: #fef3c7; color: #f59e0b; }
+        
+        /* Completed Section */
+        .section.completed .section-title { border-color: #6366f1; }
+        .section.completed .section-title i { background: #e0e7ff; color: #6366f1; }
+        .section.completed .count { background: #e0e7ff; color: #6366f1; }
+        
+        /* Test Cards */
+        .test-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .test-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            transition: all 0.2s;
+        }
+        .test-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .test-card.active { border-left: 4px solid #16a34a; }
+        .test-card.upcoming { border-left: 4px solid #f59e0b; }
+        .test-card.completed { border-left: 4px solid #6366f1; }
+        
+        .test-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        .test-card.active .test-icon { background: #dcfce7; color: #16a34a; }
+        .test-card.upcoming .test-icon { background: #fef3c7; color: #f59e0b; }
+        .test-card.completed .test-icon { background: #e0e7ff; color: #6366f1; }
+        
+        .test-info { flex: 1; }
+        .test-info h3 {
+            font-size: 1rem;
+            color: var(--text-dark);
+            margin: 0 0 0.25rem;
+        }
+        .test-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+        .test-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .test-action { flex-shrink: 0; }
+        .btn-test {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-test.start {
+            background: #16a34a;
+            color: white;
+        }
+        .btn-test.start:hover { background: #15803d; }
+        .btn-test.locked {
+            background: #f1f5f9;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+        
+        /* Score Badge */
+        .score-badge {
+            text-align: center;
+            min-width: 80px;
+        }
+        .score-badge .score {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .score-badge .percent {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .score-high .score { color: #16a34a; }
+        .score-high .percent { background: #dcfce7; color: #16a34a; }
+        .score-mid .score { color: #f59e0b; }
+        .score-mid .percent { background: #fef3c7; color: #f59e0b; }
+        .score-low .score { color: #ef4444; }
+        .score-low .percent { background: #fee2e2; color: #ef4444; }
+        
+        /* Countdown */
+        .countdown-badge {
+            background: #fef3c7;
+            color: #f59e0b;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        /* Loading */
+        .loading-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #94a3b8;
+        }
+        .loading-state i { font-size: 3rem; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="brand"><i class='bx bx-atom'></i> Virtual Lab</div>
+        <ul class="nav-menu" id="nav-menu">
+            <!-- Dynamic sidebar loaded by JS -->
+        </ul>
+        <div class="user-profile">
+            <a href="/logout" class="logout-btn"><i class='bx bx-log-out'></i> Sign Out</a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">My Tests</h1>
+            <p class="page-subtitle">View scheduled tests and your assessment results.</p>
+        </div>
+
+        <div class="tests-page">
+            <!-- Loading State -->
+            <div id="loadingState" class="loading-state">
+                <i class='bx bx-loader-alt bx-spin'></i>
+                <p>Loading tests...</p>
+            </div>
+
+            <!-- No Tests State -->
+            <div id="noTestsState" class="no-tests-container" style="display:none;">
+                <div class="no-tests-illustration">
+                    <i class='bx bx-calendar-check'></i>
+                </div>
+                <h2>No Tests Scheduled</h2>
+                <p>Your teacher hasn't scheduled any tests yet. Check back later or explore other learning resources!</p>
+                <div class="suggestions-box">
+                    <h4><i class='bx bx-bulb'></i> In the meantime, you can:</h4>
+                    <a href="/quiz" class="suggestion-item">
+                        <i class='bx bx-brain'></i>
+                        <span>Practice with Quizzes</span>
+                    </a>
+                    <a href="/student_menu" class="suggestion-item">
+                        <i class='bx bx-flask'></i>
+                        <span>Try Virtual Experiments</span>
+                    </a>
+                    <a href="/lectures" class="suggestion-item">
+                        <i class='bx bx-video'></i>
+                        <span>Watch Lecture Videos</span>
+                    </a>
+                    <a href="/materials" class="suggestion-item">
+                        <i class='bx bx-book-open'></i>
+                        <span>Read Study Materials</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Tests Content -->
+            <div id="testsContent" style="display:none;">
+                <!-- Active Tests Section -->
+                <div class="section active" id="activeSection" style="display:none;">
+                    <div class="section-title">
+                        <i class='bx bx-play-circle'></i>
+                        <span>Active Tests</span>
+                        <span class="count" id="activeCount">0</span>
+                    </div>
+                    <div class="test-list" id="activeTestsList"></div>
+                </div>
+
+                <!-- Upcoming Tests Section -->
+                <div class="section upcoming" id="upcomingSection" style="display:none;">
+                    <div class="section-title">
+                        <i class='bx bx-calendar'></i>
+                        <span>Upcoming Tests</span>
+                        <span class="count" id="upcomingCount">0</span>
+                    </div>
+                    <div class="test-list" id="upcomingTestsList"></div>
+                </div>
+
+                <!-- Completed Tests Section -->
+                <div class="section completed" id="completedSection" style="display:none;">
+                    <div class="section-title">
+                        <i class='bx bx-check-circle'></i>
+                        <span>Completed Tests</span>
+                        <span class="count" id="completedCount">0</span>
+                    </div>
+                    <div class="test-list" id="completedTestsList"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let allTests = [];
+        let completedResults = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAllData();
+        });
+
+        async function loadAllData() {
+            try {
+                const [testsRes, resultsRes] = await Promise.all([
+                    fetch('/api/test/active_tests'),
+                    fetch('/api/test/student_results')
+                ]);
+                
+                allTests = await testsRes.json();
+                completedResults = await resultsRes.json();
+                
+                document.getElementById('loadingState').style.display = 'none';
+                renderAllSections();
+            } catch (err) {
+                console.error('Error loading data:', err);
+                document.getElementById('loadingState').innerHTML = `
+                    <i class='bx bx-error-circle' style="color:#ef4444;"></i>
+                    <p>Error loading tests. Please refresh the page.</p>
+                `;
+            }
+        }
+
+        function renderAllSections() {
+            const now = new Date();
+            const takenTestIds = new Set(completedResults.map(r => r.testId));
+            
+            const activeTests = [];
+            const upcomingTests = [];
+            
+            allTests.forEach(test => {
+                if (takenTestIds.has(test.id)) return;
+                
+                const testDateTime = new Date(test.scheduledDate + 'T' + test.scheduledTime);
+                
+                if (testDateTime <= now) {
+                    activeTests.push(test);
+                } else {
+                    upcomingTests.push(test);
+                }
+            });
+            
+            // Check if there are NO tests at all
+            if (allTests.length === 0 && completedResults.length === 0) {
+                document.getElementById('noTestsState').style.display = 'flex';
+                document.getElementById('testsContent').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('noTestsState').style.display = 'none';
+            document.getElementById('testsContent').style.display = 'block';
+            
+            renderActiveTests(activeTests);
+            renderUpcomingTests(upcomingTests);
+            renderCompletedTests(completedResults);
+        }
+
+        function renderActiveTests(tests) {
+            const section = document.getElementById('activeSection');
+            const list = document.getElementById('activeTestsList');
+            const count = document.getElementById('activeCount');
+            
+            if (tests.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+            
+            section.style.display = 'block';
+            count.textContent = tests.length;
+            
+            list.innerHTML = tests.map(test => `
+                <div class="test-card active">
+                    <div class="test-icon"><i class='bx bx-play'></i></div>
+                    <div class="test-info">
+                        <h3>${test.title}</h3>
+                        <div class="test-meta">
+                            <span><i class='bx bx-book'></i> ${test.subject}</span>
+                            <span><i class='bx bx-help-circle'></i> ${test.numQuestions} Questions</span>
+                            <span><i class='bx bx-time'></i> ${test.duration} min</span>
+                        </div>
+                    </div>
+                    <div class="test-action">
+                        <button class="btn-test start" onclick="startTest(${test.id})">
+                            <i class='bx bx-play'></i> Start Now
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderUpcomingTests(tests) {
+            const section = document.getElementById('upcomingSection');
+            const list = document.getElementById('upcomingTestsList');
+            const count = document.getElementById('upcomingCount');
+            
+            if (tests.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+            
+            section.style.display = 'block';
+            count.textContent = tests.length;
+            
+            list.innerHTML = tests.map(test => {
+                const testDate = new Date(test.scheduledDate + 'T' + test.scheduledTime);
+                const countdown = getCountdown(testDate);
+                const dateStr = testDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                
+                return `
+                    <div class="test-card upcoming">
+                        <div class="test-icon"><i class='bx bx-calendar'></i></div>
+                        <div class="test-info">
+                            <h3>${test.title}</h3>
+                            <div class="test-meta">
+                                <span><i class='bx bx-book'></i> ${test.subject}</span>
+                                <span><i class='bx bx-help-circle'></i> ${test.numQuestions} Questions</span>
+                                <span><i class='bx bx-time'></i> ${test.duration} min</span>
+                            </div>
+                            <div class="test-meta" style="margin-top:0.5rem;">
+                                <span><i class='bx bx-calendar-event'></i> ${dateStr}</span>
+                            </div>
+                        </div>
+                        <div class="test-action">
+                            <div class="countdown-badge">
+                                <i class='bx bx-time-five'></i> ${countdown}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderCompletedTests(results) {
+            const section = document.getElementById('completedSection');
+            const list = document.getElementById('completedTestsList');
+            const count = document.getElementById('completedCount');
+            
+            if (results.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+            
+            section.style.display = 'block';
+            count.textContent = results.length;
+            
+            list.innerHTML = results.map(r => {
+                const percent = r.total > 0 ? Math.round((r.score / r.total) * 100) : 0;
+                const scoreClass = percent >= 70 ? 'score-high' : (percent >= 50 ? 'score-mid' : 'score-low');
+                
+                return `
+                    <div class="test-card completed">
+                        <div class="test-icon"><i class='bx bx-check'></i></div>
+                        <div class="test-info">
+                            <h3>${r.testTitle}</h3>
+                            <div class="test-meta">
+                                <span><i class='bx bx-calendar'></i> ${r.date}</span>
+                            </div>
+                        </div>
+                        <div class="test-action">
+                            <div class="score-badge ${scoreClass}">
+                                <div class="score">${r.score}/${r.total}</div>
+                                <span class="percent">${percent}%</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getCountdown(targetDate) {
+            const now = new Date();
+            const diff = targetDate - now;
+            
+            if (diff <= 0) return 'Starting soon...';
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            
+            if (days > 0) return `${days}d ${hours}h`;
+            if (hours > 0) return `${hours}h ${minutes}m`;
+            return `${minutes}m`;
+        }
+
+        async function startTest(testId) {
+            try {
+                const checkRes = await fetch(`/api/test/check_taken?testId=${testId}`);
+                const checkData = await checkRes.json();
+                
+                if (checkData.taken) {
+                    alert('You have already completed this test.');
+                    loadAllData();
+                    return;
+                }
+                
+                if (confirm('📹 Camera Required\n\nThis test uses video proctoring. Your camera will record during the test.\n\nAre you ready to begin?')) {
+                    window.location.href = `/test_exam?testId=${testId}`;
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                alert('Error checking test status. Please try again.');
+            }
+        }
+
+        // Load sidebar based on role
+        function loadSidebar() {
+            fetch('/getprofile')
+                .then(res => res.json())
+                .then(data => {
+                    const navMenu = document.getElementById('nav-menu');
+                    let menuHTML = '';
+                    
+                    if (data.role === 'TEACHER') {
+                        menuHTML = `
+                            <li class="nav-item"><a href="/teacher_menu" class="nav-link"><i class='bx bx-grid-alt'></i> Dashboard</a></li>
+                            <li class="nav-item"><a href="/lectures" class="nav-link"><i class='bx bx-video'></i> Lectures</a></li>
+                            <li class="nav-item"><a href="/materials" class="nav-link"><i class='bx bx-book-open'></i> Materials</a></li>
+                            <li class="nav-item"><a href="/quiz" class="nav-link"><i class='bx bx-brain'></i> Quizzes</a></li>
+                            <li class="nav-item"><a href="/tests" class="nav-link active"><i class='bx bx-edit-alt'></i> Tests</a></li>
+                            <li class="nav-item"><a href="/feedback" class="nav-link"><i class='bx bx-message-square-dots'></i> Feedback</a></li>
+                            <li class="nav-item"><a href="/profile" class="nav-link"><i class='bx bx-user-circle'></i> My Profile</a></li>
+                        `;
+                    } else {
+                        menuHTML = `
+                            <li class="nav-item"><a href="/student_menu" class="nav-link"><i class='bx bx-grid-alt'></i> Dashboard</a></li>
+                            <li class="nav-item"><a href="/lectures" class="nav-link"><i class='bx bx-video'></i> Lectures</a></li>
+                            <li class="nav-item"><a href="/materials" class="nav-link"><i class='bx bx-book-open'></i> Materials</a></li>
+                            <li class="nav-item"><a href="/quiz" class="nav-link"><i class='bx bx-brain'></i> Quizzes</a></li>
+                            <li class="nav-item"><a href="/tests" class="nav-link active"><i class='bx bx-edit-alt'></i> Tests</a></li>
+                            <li class="nav-item"><a href="/dashboard" class="nav-link"><i class='bx bx-bar-chart-alt-2'></i> Performance</a></li>
+                            <li class="nav-item"><a href="/feedback" class="nav-link"><i class='bx bx-message-square-dots'></i> Feedback</a></li>
+                            <li class="nav-item"><a href="/profile" class="nav-link"><i class='bx bx-user-circle'></i> My Profile</a></li>
+                        `;
+                    }
+                    navMenu.innerHTML = menuHTML;
+                });
+        }
+        loadSidebar();
+    </script>
+</body>
+</html>
